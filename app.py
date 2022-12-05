@@ -5,9 +5,12 @@ import textwrap
 import requests
 import random
 
-MENU_OPTION = 0
-USER_KEYPRESS = ""
-PROMPT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent tempor nulla id finibus maximus. Sed eget efficitur dolor, in sodales massa. Donec vitae condimentum lectus, ut scelerisque ex. Vivamus aliquet aliquam diam eu hendrerit. Donec et mauris non arcu aliquet elementum. Aliquam ultrices ac sem non ornare. Donec bibendum pharetra lorem, ut ullamcorper nisi rhoncus at. In eu lacus non tortor interdum varius. Suspendisse aliquam ex eu dignissim dictum. Morbi non cursus dui. Praesent auctor nisi vitae est iaculis tempus. Aliquam scelerisque convallis lorem ut aliquam. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae."
+
+# Finding the terminal window size to correctly center text
+WINDOW_SIZE = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
+MAX_WIDTH = int(WINDOW_SIZE[0]//1.3)
+TEXT_START_X = int((WINDOW_SIZE[0] - MAX_WIDTH)//2)
+TEXT_START_Y = int(WINDOW_SIZE[1] * 0.2)
 
 
 def set_shorter_esc_delay_in_os():
@@ -30,12 +33,12 @@ def check_key_validity(window):
 
 
 def load_file(window):
-    file_path = ""
-    if os.path.exists(file_path):
-        with open(file_path, 'r', encoding='utf-8-sig') as f:
-            return f.read().splitlines()
-    else:
-        return 1
+    directory = os.getcwd()
+    for file in os.listdir(directory):
+        if file.endswith(".txt") and file != "requirements.txt":
+            with open(file, 'r') as f:
+                lines = f.read().splitlines()
+                return " ".join(lines)
 
 
 def quick_print(window, x, y, text):
@@ -47,48 +50,70 @@ def quick_print(window, x, y, text):
 
 def menu(window, x, y):
     while True:
-        menu_text = ["Welcome to Speed-Typer, an typing game to test your skills",
+        menu_text = ["Welcome to Speed-Typer, a typing game to test your skills",
                      "Please select from the following options:",
                      "1. Test from file",
                      "2. Test random words",
                      "3. Test a quote",
-                     "5. Quit"]
+                     "4. Quit"]
 
-        key = window.getch()
+        window.clear()
 
         for i in range(len(menu_text)):
             window.addstr(y + i, x, menu_text[i])
 
-        window.refresh()
+        key = window.getch()
 
         match key:
-            case 27:
-                quit()
             case 49:
                 quick_print(
-                    window, x, y, "To load file, drag file to 'in-file folder")
+                    window, x, y, "Copy '.txt' file to app directory to load text")
                 file_text = load_file(window)
-                if file_text != 1:
-                    return file_text
+                return [file_text]
             case 50:
+                quick_print(
+                    window, x, y, "Loading words from MIT")
                 try:
                     response = requests.get(
                         "https://www.mit.edu/~ecprice/wordlist.10000")
-                WORDS = response.content.splitlines()
+                except:
+                    quick_print(
+                        window, x, y, "Unable to load random words, sorry!")
+                    continue
+                random_words = response.content.splitlines()
                 word_selection = []
-                for i in range(200):
-                    word_selection.append(WORDS[random.random(0, len(WORDS))])
-                return word_selection
+                for i in range(50):
+                    word_selection.append(
+                        str(random_words[random.randint(0, len(random_words))])[2:-1])
+                return [" ".join(word_selection)]
+            case 51:
+                quick_print(
+                    window, x, y, "Loading quotes from Type.fit API")
+                try:
+                    response = requests.get(
+                        "https://type.fit/api/quotes").json()
+                except:
+                    quick_print(window, x, y, "Unable to load quotes, sorry!")
+                    continue
+                quote = response[random.randint(0, len(response))]
+                return [f"{quote['text']} - {quote['author']}"]
+            case 52:
+                quick_print(
+                    window, x, y, "Goodbye")
+                time.sleep(1)
+                quit()
 
 
 def main(window):
+
+    # Ask user for menu choice
+    typing_prompt = menu(window, TEXT_START_X, TEXT_START_Y)
+
+    # Update delay so that program isn't waiting on user input
     window.nodelay(True)
 
-    # Finding the terminal window size to correctly center text
-    window_size = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
-    max_width = int(window_size[0]//1.3)
-    text_start_x = int((window_size[0] - max_width)//2)
-    text_start_y = int(window_size[1] * 0.2)
+    # Clear screen of menu
+    window.clear()
 
     # Applying text styling colours to variables
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -98,10 +123,6 @@ def main(window):
     green = curses.color_pair(2)
     red = curses.color_pair(3)
 
-    response = menu(window, text_start_x, text_start_y)
-
-    output = []
-    sub_output = ''
     while True:
         # Get the inputted key from user
         try:
@@ -116,7 +137,7 @@ def main(window):
         # Check if key is alphanumeric/punctuation
         elif 32 <= key < 126:
             # TODO - this is the main block of code
-            if len(output) < max_width:
+            if len(output) < MAX_WIDTH:
                 sub_output += chr(key)
             else:
                 USER_KEYPRESS.append(chr(key))
@@ -143,7 +164,7 @@ def main(window):
 
         # Draw output
         for i in range(len(output)):
-            window.addstr(text_start_x + i, text_start_y, output[i])
+            window.addstr(TEXT_START_X + i, TEXT_START_Y, output[i])
 
         # Display new content
         window.refresh()

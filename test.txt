@@ -1,14 +1,3 @@
-this is a test of the file in out
-this is a second line
-this is a third line
-
-
-bla
-
-bla
-
-bla
-
-
-
-the end
+Hello my name is Matt.
+This is the first time playing this game.
+I like it.
