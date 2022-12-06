@@ -184,6 +184,7 @@ def main(window):
             quit()
         # Check if 'enter' key hit, clears input and returns to main menu
         if key == 10 or key == 13:
+            # TODO convert string into list the same length as prompt so text breaks the lines the same way as the prompt
             user_typed_string = ""
             typing_prompt = menu(window, TEXT_START_X, TEXT_START_Y)
         # Check if key is alphanumeric/punctuation, add to user input
