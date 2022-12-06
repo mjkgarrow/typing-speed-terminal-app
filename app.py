@@ -65,7 +65,13 @@ def print_screen(window, typing_prompt, wrapped_user_typed):
     draw(window, typing_prompt)
 
     # Draw user input
-    draw(window, wrapped_user_typed)
+    for line in range(len(wrapped_user_typed)):
+        for char in range(len(wrapped_user_typed[line])):
+            colour = curses.color_pair(2)
+            if wrapped_user_typed[line][char] != typing_prompt[line][char]:
+                colour = curses.color_pair(3)
+            window.addstr(TEXT_START_Y + line, TEXT_START_X + char,
+                          wrapped_user_typed[line][char], colour)
 
 
 def menu(window, x, y):
@@ -144,9 +150,9 @@ def menu(window, x, y):
 
 def main(window):
     # Applying text styling colours to variables
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # white text
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # green text
+    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)  # red text
     white = curses.color_pair(1)
     green = curses.color_pair(2)
     red = curses.color_pair(3)
