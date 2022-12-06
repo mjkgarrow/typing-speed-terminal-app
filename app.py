@@ -20,7 +20,7 @@ DIRECTORY = os.getcwd()
 
 
 def load_file():
-    '''Loads txt file from within app directory, returns a string of file contents'''
+    '''Loads prompt txt file from within app directory, returns a string of file contents'''
     while True:
         for file in os.listdir(DIRECTORY):
             if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
@@ -30,6 +30,7 @@ def load_file():
 
 
 def load_high_score():
+    ''' Loads scores file and returns list of scores'''
     file_list = os.listdir(DIRECTORY)
     if "scores.txt" in file_list:
         with open("scores.txt", 'r') as f:
@@ -48,12 +49,23 @@ def quick_print(window, x, y, text):
 
 
 def draw(window, text):
-    '''Draws text to the screen, line by line'''
-    # window.addstr(0, 0, "Press 'esc' to exit, 'enter' to return to menu")
+    '''Draws list of text to the screen, line by line'''
     for i in range(len(text)):
         window.addstr(TEXT_START_Y + i, TEXT_START_X,
                       text[i])
-    # window.move(TEXT_START_Y + len(text), TEXT_START_X + len(text))
+
+
+def calculate_wpm(wrapped_user_typed):
+    pass
+
+
+def print_screen(window, typing_prompt, wrapped_user_typed):
+
+    # Draw typing prompt to screen
+    draw(window, typing_prompt)
+
+    # Draw user input
+    draw(window, wrapped_user_typed)
 
 
 def menu(window, x, y):
@@ -85,7 +97,7 @@ def menu(window, x, y):
                 quick_print(
                     window, x, y, "Copy '.txt' file to app directory to load text")
                 file_text = load_file()
-                return textwrap.wrap(file_text, MAX_WIDTH)
+                return textwrap.wrap(file_text, MAX_WIDTH, drop_whitespace=False)
             case 50:
                 quick_print(
                     window, x, y, "Loading words from MIT")
@@ -101,7 +113,7 @@ def menu(window, x, y):
                 for i in range(50):
                     word_selection.append(
                         str(random_words[random.randint(0, len(random_words))])[2:-1])
-                return textwrap.wrap(" ".join(word_selection), MAX_WIDTH)
+                return textwrap.wrap(" ".join(word_selection), MAX_WIDTH, drop_whitespace=False)
             case 51:
                 quick_print(
                     window, x, y, "Loading quotes from Type.fit API")
@@ -112,7 +124,7 @@ def menu(window, x, y):
                     quick_print(window, x, y, "Unable to load quotes, sorry!")
                     continue
                 quote = response[random.randint(0, len(response))]
-                return textwrap.wrap(f"{quote['text']} - {quote['author']}", MAX_WIDTH)
+                return textwrap.wrap(f"{quote['text']} - {quote['author']}", MAX_WIDTH, drop_whitespace=False)
             case 52:
                 scores = load_high_score()
                 window.erase()
@@ -142,8 +154,8 @@ def main(window):
     # Ask user for menu choice, return a typing prompt
     typing_prompt = menu(window, TEXT_START_X, TEXT_START_Y)
 
-    # Set cursor to visible
-    curses.curs_set(1)
+    # # Set cursor to visible
+    # curses.curs_set(1)
 
     # Update delay so that program isn't waiting on user input
     window.nodelay(True)
@@ -173,25 +185,20 @@ def main(window):
             user_typed_string += chr(key)
         # Check if key is backspace, remove from user input
         elif key == 127:
-            try:
+            if len(user_typed_string) > 0:
                 user_typed_string = user_typed_string[:-1]
-            except:
-                continue
+
+        # Make text wrapped so it will fit in center of screen
+        wrapped_user_typed = textwrap.wrap(
+            user_typed_string, MAX_WIDTH, drop_whitespace=False)
 
         # Clear screen so new text can be drawn
         window.erase()
 
-        # Make text wrapped so it will fit in center of screen
-        wrapped_user_typed = textwrap.wrap(user_typed_string, MAX_WIDTH)
-
         # Draw menu directions to screen
         window.addstr(0, 0, "Press 'esc' to exit, 'enter' to return to menu")
 
-        # Draw typing prompt to screen
-        draw(window, typing_prompt)
-
-        # Draw user input
-        draw(window, wrapped_user_typed)
+        print_screen(window, typing_prompt, wrapped_user_typed)
 
         # Display new content
         window.refresh()
