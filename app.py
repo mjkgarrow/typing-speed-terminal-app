@@ -6,6 +6,9 @@ import requests
 import random
 
 
+# Create requirements
+# pip freeze > requirements.txt
+
 # Finding the terminal window size to correctly center text
 WINDOW_SIZE = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
 MAX_WIDTH = int(WINDOW_SIZE[0]//1.3)
@@ -18,7 +21,7 @@ def load_file():
     directory = os.getcwd()
     while True:
         for file in os.listdir(directory):
-            if file.endswith(".txt") and file != "requirements.txt":
+            if file.endswith(".txt") and file != "requirements.txt" and file != "score.txt":
                 with open(file, 'r') as f:
                     lines = f.read().splitlines()
                     return " ".join(lines)
@@ -34,13 +37,18 @@ def quick_print(window, x, y, text):
 
 def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
+
+    # Set cursor to invisible
+    curses.curs_set(0)
+
     while True:
         menu_text = ["Welcome to Speed-Typer, a typing game to test your skills",
                      "Please select from the following options:",
                      "1. Test from file",
                      "2. Test random words",
                      "3. Test a quote",
-                     "4. Quit"]
+                     "4. See high scores",
+                     "5. Quit"]
 
         window.erase()
 
@@ -83,6 +91,8 @@ def menu(window, x, y):
                 quote = response[random.randint(0, len(response))]
                 return textwrap.wrap(f"{quote['text']} - {quote['author']}", MAX_WIDTH)
             case 52:
+                pass
+            case 53:
                 quick_print(
                     window, x, y, "Goodbye")
                 time.sleep(1)
@@ -95,21 +105,18 @@ def draw(window, text):
     for i in range(len(text)):
         window.addstr(TEXT_START_Y + i, TEXT_START_X,
                       text[i])
-    # window.move(TEXT_START_Y, TEXT_START_X)
+    # window.move(TEXT_START_Y + len(text), TEXT_START_X + len(text))
 
 
 def main(window):
-    # Set cursor to invisible
-    curses.curs_set(0)
-
     # Ask user for menu choice, return a typing prompt
     typing_prompt = menu(window, TEXT_START_X, TEXT_START_Y)
 
+    # Set cursor to visible
+    curses.curs_set(1)
+
     # Update delay so that program isn't waiting on user input
     window.nodelay(True)
-
-    # Clear screen of menu
-    window.erase()
 
     # Applying text styling colours to variables
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -131,6 +138,8 @@ def main(window):
 
         # Check if key is 'esc', quits immediately
         if key == 27:
+            quick_print(window, TEXT_START_X, TEXT_START_Y, "Goodbye")
+            time.sleep(1)
             quit()
 
         # Check if 'enter' key hit, clears input and returns to main menu
@@ -149,11 +158,14 @@ def main(window):
             except:
                 continue
 
-        # Draw typing prompt to screen
-        draw(window, typing_prompt)
+        # Clear screen so new text can be drawn
+        window.erase()
 
         # Make text wrapped so it will fit in center of screen
         wrapped_user_typed = textwrap.wrap(user_typed_string, MAX_WIDTH)
+
+        # Draw typing prompt to screen
+        draw(window, typing_prompt)
 
         # Draw user input
         draw(window, wrapped_user_typed)

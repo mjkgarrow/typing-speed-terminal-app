@@ -1,2 +1,5 @@
 venv
 test.txt
+score.txt
+__pycache__
+.pytest_cache
