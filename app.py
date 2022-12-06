@@ -15,16 +15,28 @@ MAX_WIDTH = int(WINDOW_SIZE[0]//1.3)
 TEXT_START_X = int((WINDOW_SIZE[0] - MAX_WIDTH)//2)
 TEXT_START_Y = int(WINDOW_SIZE[1] * 0.2)
 
+# Working folder director
+DIRECTORY = os.getcwd()
+
 
 def load_file():
     '''Loads txt file from within app directory, returns a string of file contents'''
-    directory = os.getcwd()
     while True:
-        for file in os.listdir(directory):
-            if file.endswith(".txt") and file != "requirements.txt" and file != "score.txt":
+        for file in os.listdir(DIRECTORY):
+            if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
                 with open(file, 'r') as f:
                     lines = f.read().splitlines()
                     return " ".join(lines)
+
+
+def load_high_score():
+    file_list = os.listdir(DIRECTORY)
+    if "scores.txt" in file_list:
+        with open("scores.txt", 'r') as f:
+            return f.read().splitlines()
+
+    else:
+        return ["No high scores."]
 
 
 def quick_print(window, x, y, text):
@@ -35,15 +47,26 @@ def quick_print(window, x, y, text):
     window.refresh()
 
 
+def draw(window, text):
+    '''Draws text to the screen, line by line'''
+    # window.addstr(0, 0, "Press 'esc' to exit, 'enter' to return to menu")
+    for i in range(len(text)):
+        window.addstr(TEXT_START_Y + i, TEXT_START_X,
+                      text[i])
+    # window.move(TEXT_START_Y + len(text), TEXT_START_X + len(text))
+
+
 def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
+    # Update delay so that program waits on user input
+    window.nodelay(False)
 
     # Set cursor to invisible
     curses.curs_set(0)
 
     while True:
-        menu_text = ["Welcome to Speed-Typer, a typing game to test your skills",
-                     "Please select from the following options:",
+        menu_text = ["Welcome to Keebz-Typerz, a typing game to test your skills",
+                     "Please select a number from the following options:",
                      "1. Test from file",
                      "2. Test random words",
                      "3. Test a quote",
@@ -91,24 +114,31 @@ def menu(window, x, y):
                 quote = response[random.randint(0, len(response))]
                 return textwrap.wrap(f"{quote['text']} - {quote['author']}", MAX_WIDTH)
             case 52:
-                pass
+                scores = load_high_score()
+                window.erase()
+                window.addstr(
+                    0, 0, "Press 'esc' to exit, 'enter' to return to menu")
+                draw(window, scores)
+                window.refresh()
+                window.getch()
             case 53:
                 quick_print(
                     window, x, y, "Goodbye")
                 time.sleep(1)
                 quit()
 
-
-def draw(window, text):
-    '''Draws text to the screen, line by line'''
-    window.addstr(0, 0, "Press 'esc' to exit, 'enter' to return to menu")
-    for i in range(len(text)):
-        window.addstr(TEXT_START_Y + i, TEXT_START_X,
-                      text[i])
-    # window.move(TEXT_START_Y + len(text), TEXT_START_X + len(text))
+        window.refresh()
 
 
 def main(window):
+    # Applying text styling colours to variables
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
+    white = curses.color_pair(1)
+    green = curses.color_pair(2)
+    red = curses.color_pair(3)
+
     # Ask user for menu choice, return a typing prompt
     typing_prompt = menu(window, TEXT_START_X, TEXT_START_Y)
 
@@ -118,19 +148,12 @@ def main(window):
     # Update delay so that program isn't waiting on user input
     window.nodelay(True)
 
-    # Applying text styling colours to variables
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
-    white = curses.color_pair(1)
-    green = curses.color_pair(2)
-    red = curses.color_pair(3)
-
     # Variable to store user input
     user_typed_string = ""
 
     while True:
-        # Get the inputted key from user
+        # Get the inputted key from user, because delay is zero getch() will be returning None continuously until user types.
+        # So need to catch that possible error.
         try:
             key = window.getch()
         except:
@@ -141,16 +164,13 @@ def main(window):
             quick_print(window, TEXT_START_X, TEXT_START_Y, "Goodbye")
             time.sleep(1)
             quit()
-
         # Check if 'enter' key hit, clears input and returns to main menu
         if key == 10 or key == 13:
             user_typed_string = ""
             typing_prompt = menu(window, TEXT_START_X, TEXT_START_Y)
-
-            # Check if key is alphanumeric/punctuation, add to user input
+        # Check if key is alphanumeric/punctuation, add to user input
         elif 32 <= key < 126:
             user_typed_string += chr(key)
-
         # Check if key is backspace, remove from user input
         elif key == 127:
             try:
@@ -163,6 +183,9 @@ def main(window):
 
         # Make text wrapped so it will fit in center of screen
         wrapped_user_typed = textwrap.wrap(user_typed_string, MAX_WIDTH)
+
+        # Draw menu directions to screen
+        window.addstr(0, 0, "Press 'esc' to exit, 'enter' to return to menu")
 
         # Draw typing prompt to screen
         draw(window, typing_prompt)
