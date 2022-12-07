@@ -38,11 +38,15 @@ def load_high_score():
         return ["No high scores."]
 
 
-def quick_print(window, x, y, text):
+def quick_print(window, x, y, text, colour=None):
     ''' Clears screen and types supplied text'''
     window.erase()
-    window.addstr(
-        y, x, text)
+    if colour:
+        window.addstr(
+            y, x, text, colour)
+    else:
+        window.addstr(
+            y, x, text)
     window.refresh()
 
 
@@ -92,7 +96,14 @@ def menu(window, x, y, max_width):
         window.erase()
 
         for i in range(len(menu_text)):
-            window.addstr(y + i, x, menu_text[i])
+            if i < 2:
+                colour = curses.color_pair(5)  # Magenta title text
+            elif i == 6:
+                colour = curses.color_pair(3)  # Red quit text
+            else:
+                colour = curses.color_pair(4)  # Blue option text
+
+            window.addstr(y + i, x, menu_text[i], colour)
 
         key = window.getch()
 
@@ -102,7 +113,7 @@ def menu(window, x, y, max_width):
                 quick_print(
                     window, x, y, "Copy '.txt' file to app directory to load text")
                 window.addstr(
-                    0, 0, "Press 'enter' to return to menu")
+                    0, 0, "Press 'enter' to return to menu", curses.color_pair(2))
                 window.refresh()
                 file_text = load_file(window)
                 if file_text != 0:
@@ -119,7 +130,7 @@ def menu(window, x, y, max_width):
                 except:
                     # Tell user why request failed
                     quick_print(
-                        window, x, y, "Unable to load random words, sorry!")
+                        window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
                     time.sleep(2)
                     continue
 
@@ -152,16 +163,21 @@ def menu(window, x, y, max_width):
                 # Return a list of strings that are wrapped to the length of the terminal
                 return textwrap.wrap(f"{quote['text']} - {quote['author']}", max_width)
             case 52:  # If user presses 4
+                # Load high scores file
                 scores = load_high_score()
                 window.erase()
                 window.addstr(
-                    0, 0, "Press 'esc' to exit, 'enter' to return to menu")
+                    0, 0, "Press 'esc' to exit, 'enter' to return to menu", curses.color_pair(2))
+                # Print scores to screen
                 draw(window, scores, x, y)
                 window.refresh()
+                # Wait for user input
                 window.getch()
             case 53:  # If user presses 5
+                # Print goodbye message
                 quick_print(
-                    window, x, y, "Goodbye")
+                    window, x, y, "Goodbye", curses.color_pair(2))
+                # Wait a second and quit
                 time.sleep(1)
                 quit()
 
@@ -179,13 +195,12 @@ def main(window):
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # white text
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # green text
     curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)  # red text
-    white = curses.color_pair(1)
-    green = curses.color_pair(2)
-    red = curses.color_pair(3)
+    curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)  # blue text
+    curses.init_pair(5, curses.COLOR_MAGENTA,
+                     curses.COLOR_BLACK)  # magenta text
 
     # Ask user for menu choice, return a typing prompt
-    typing_prompt = menu(window, text_start_x, text_start_y,
-                         max_width)
+    typing_prompt = menu(window, text_start_x, text_start_y, max_width)
 
     # # Set cursor to visible
     # curses.curs_set(1)
@@ -206,7 +221,8 @@ def main(window):
 
         # Check if key is 'esc', quits immediately
         if key == 27:
-            quick_print(window, text_start_x, text_start_y, "Goodbye")
+            quick_print(window, text_start_x, text_start_y,
+                        "Goodbye", curses.color_pair(2))
             time.sleep(1)
             quit()
         # Check if 'enter' key hit, clears input and returns to main menu
@@ -230,7 +246,8 @@ def main(window):
         window.erase()
 
         # Draw menu directions to screen
-        window.addstr(0, 0, "Press 'esc' to exit, 'enter' to return to menu")
+        window.addstr(
+            0, 0, "Press 'esc' to exit, 'enter' to return to menu", curses.color_pair(2))
 
         print_screen(window, typing_prompt, wrapped_user_typed,
                      text_start_x, text_start_y)
