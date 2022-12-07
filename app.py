@@ -9,9 +9,6 @@ import random
 # Create requirements
 # pip freeze > requirements.txt
 
-# Working folder director
-DIRECTORY = os.getcwd()
-
 
 def check_valid_terminal():
     window_size = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
@@ -26,7 +23,7 @@ def get_window_sizes():
     window_size = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
     max_width = int(window_size[0]//1.3)
     text_start_x = int((window_size[0] - max_width)//2)
-    text_start_y = int(window_size[1] * 0.2)
+    text_start_y = int(window_size[1] * 0.3)
     return [max_width, text_start_x, text_start_y]
 
 
@@ -42,7 +39,7 @@ def load_file(window):
             return 0
 
         # Search through directory to find a file
-        for file in os.listdir(DIRECTORY):
+        for file in os.listdir(os.getcwd()):
             if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
                 with open(file, 'r') as f:
                     lines = f.read().splitlines()
@@ -51,7 +48,7 @@ def load_file(window):
 
 def load_high_score():
     ''' Loads scores file and returns list of scores'''
-    file_list = os.listdir(DIRECTORY)
+    file_list = os.listdir(os.getcwd())
     if "scores.txt" in file_list:
         with open("scores.txt", 'r') as f:
             return f.read().splitlines()
@@ -83,9 +80,6 @@ def calculate_wpm(prompt, user, time_in_seconds):
     if len(user) == 0:
         return (0, 0, 0)
 
-    # minutes = time_in_seconds/60
-    # gross_wpm = int((user_length/5)/minutes)
-
     errors = 0
     for i in range(len(user)):
         if user[i] != prompt[i]:
@@ -93,6 +87,8 @@ def calculate_wpm(prompt, user, time_in_seconds):
 
     # net_wpm = int(gross_wpm - (errors/minutes))
     net_wpm = int(((len(user)/5) - errors)/(time_in_seconds/60))
+    if net_wpm < 0:
+        net_wpm = 0
     accuracy = round(((len(user) - errors)/len(user)) * 100, 1)
     return (net_wpm, accuracy)
 
@@ -111,8 +107,12 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
             else:
                 colour = curses.color_pair(2)  # Green text if right
             # Add each individual character to screen
-            window.addstr(text_start_y + line, text_start_x + char,
-                          wrapped_user_typed[line][char], colour)
+            if wrapped_user_typed[line][char] == " ":
+                window.addstr(text_start_y + line, text_start_x +
+                              char, typing_prompt[line][char], colour)
+            else:
+                window.addstr(text_start_y + line, text_start_x +
+                              char, wrapped_user_typed[line][char], colour)
 
 
 def menu(window, x, y, max_width):
@@ -311,32 +311,34 @@ def main(window):
         # Draw directions to screen
         window.addstr(
             0, 0, "Press 'esc' to exit, 'enter' to return to menu - score will not be saved", curses.color_pair(2))
-        window.addstr(
-            1, 0, "For hard mode press 'tab'", curses.color_pair(2))
 
+        # Display difficulty mode
         if hard_mode:
-            window.clrtoeol()
             window.addstr(
-                1, 0, "Difficulty: HARD (press 'tab' to return to easy mode)", curses.color_pair(2))
+                1, 0, "Difficulty: HARD ('tab' to change)", curses.color_pair(2))
+        else:
+            window.addstr(
+                1, 0, "Difficulty: EASY ('tab' to change)", curses.color_pair(2))
 
-        # Game time mechanic
+        # Game mechanics and stats
         if started:
-            # TODO print countdown, print wpm, print accuracy
             # Print countdown timer
             countdown = str(60 - (int(time.time() - start)))
             window.addstr(text_start_y - 2, text_start_x,
-                          f"Time remaining - {countdown}", curses.color_pair(2))
+                          f"Time remaining: {countdown}", curses.color_pair(2))
 
             # Print WPM
             wpm = calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
                 user_typed_wrapped), 61 - int(countdown))
             window.addstr(text_start_y - 1, text_start_x,
                           f"WPM: {wpm[0]}, Accuracy: {wpm[1]}%", curses.color_pair(2))
+
             # Check if game time is finished or user has finished typing
             if int(countdown) <= 0 or finished_typing:
                 # TODO go to finished screen
                 quit()
 
+        # Draw typing test on screen
         print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,
                           text_start_x, text_start_y)
 
