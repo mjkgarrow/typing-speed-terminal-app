@@ -269,7 +269,7 @@ def main(window):
                         "Goodbye", curses.color_pair(2))
             time.sleep(1)
             quit()
-        elif key == 9:  # Check if key is 'tab', change hard mode
+        elif key == 9:  # Check if key is 'tab', change difficulty mode
             if started:
                 continue
             else:
@@ -287,6 +287,8 @@ def main(window):
                 start = time.time()
             user_typed_string += chr(key)
         elif key == 127:  # Check if key is backspace, remove from user input
+            if hard_mode:
+                continue
             if len(user_typed_string) > 0:
                 user_typed_string = user_typed_string[:-1]
 
@@ -315,7 +317,7 @@ def main(window):
         # Display difficulty mode
         if hard_mode:
             window.addstr(
-                1, 0, "Difficulty: HARD ('tab' to change)", curses.color_pair(2))
+                1, 0, "Difficulty: HARD / No backspaces('tab' to change)", curses.color_pair(2))
         else:
             window.addstr(
                 1, 0, "Difficulty: EASY ('tab' to change)", curses.color_pair(2))
