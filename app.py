@@ -15,11 +15,16 @@ DIRECTORY = os.getcwd()
 
 def load_file(window):
     '''Loads prompt txt file from within app directory, returns a string of file contents'''
+    window.nodelay(True)
     while True:
+        # Get user input (but don't wait for input)
         key = window.getch()
-        # Check if 'enter' key hit returns to main menu
+
+        # If 'enter' key hit then return to main menu
         if key == 10 or key == 13:
             return 0
+
+        # Search through directory to find a file
         for file in os.listdir(DIRECTORY):
             if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
                 with open(file, 'r') as f:
@@ -62,16 +67,19 @@ def calculate_wpm(wrapped_user_typed):
 
 
 def print_screen(window, typing_prompt, wrapped_user_typed, text_start_x, text_start_y):
-
+    ''' Draws prompt and user typed input to screen and displays accuracy colour coding '''
     # Draw typing prompt to screen
     draw(window, typing_prompt, text_start_x, text_start_y)
 
     # Draw user input
     for line in range(len(wrapped_user_typed)):
         for char in range(len(wrapped_user_typed[line])):
-            colour = curses.color_pair(2)
+            # Change colour of user input text
             if wrapped_user_typed[line][char] != typing_prompt[line][char]:
-                colour = curses.color_pair(3)
+                colour = curses.color_pair(3)  # Red text if wrong
+            else:
+                colour = curses.color_pair(2)  # Green text if right
+            # Add each individual character to screen
             window.addstr(text_start_y + line, text_start_x + char,
                           wrapped_user_typed[line][char], colour)
 
@@ -95,6 +103,7 @@ def menu(window, x, y, max_width):
 
         window.erase()
 
+        # Display menu options
         for i in range(len(menu_text)):
             if i < 2:
                 colour = curses.color_pair(5)  # Magenta title text
@@ -102,13 +111,12 @@ def menu(window, x, y, max_width):
                 colour = curses.color_pair(3)  # Red quit text
             else:
                 colour = curses.color_pair(4)  # Blue option text
-
             window.addstr(y + i, x, menu_text[i], colour)
-
+        window.refresh()
         key = window.getch()
 
         match key:
-            case 49:  # If user presses '1'
+            case 49:  # If user presses 1
                 # Tell user to include text-file in app directory
                 quick_print(
                     window, x, y, "Copy '.txt' file to app directory to load text")
@@ -181,11 +189,11 @@ def menu(window, x, y, max_width):
                 time.sleep(1)
                 quit()
 
-        window.refresh()
+        # window.refresh()
 
 
 def main(window):
-    # Get terminal window size and calculate the max width of the text, plus the centering coordinates
+    # Get terminal window size and calculate the max width of the text, plus the centring coordinates
     window_size = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
     max_width = int(window_size[0]//1.3)
     text_start_x = int((window_size[0] - max_width)//2)
@@ -212,42 +220,34 @@ def main(window):
     user_typed_string = ""
 
     while True:
-        # Get the inputted key from user, because delay is zero getch() will be returning None continuously until user types.
-        # So need to catch that possible error.
-        try:
-            key = window.getch()
-        except:
-            key = None
-
-        # Check if key is 'esc', quits immediately
-        if key == 27:
+        key = window.getch()
+        if key == 27:  # Check if key is 'esc', quits immediately
             quick_print(window, text_start_x, text_start_y,
                         "Goodbye", curses.color_pair(2))
             time.sleep(1)
             quit()
-        # Check if 'enter' key hit, clears input and returns to main menu
-        if key == 10 or key == 13:
+        elif key == 10 or key == 13:  # Check if 'enter' key hit, clears input and returns to main menu
             user_typed_string = ""
             typing_prompt = menu(window, text_start_x, text_start_y, max_width)
-        # Check if key is alphanumeric/punctuation, add to user input
-        elif 32 <= key < 126:
+        elif 32 <= key < 126:  # Check if key is alphanumeric/punctuation, add to user input
+            if len(user_typed_string) == 0:
+                start = time.time()
             user_typed_string += chr(key)
-        # Check if key is backspace, remove from user input
-        elif key == 127:
+        elif key == 127:  # Check if key is backspace, remove from user input
             if len(user_typed_string) > 0:
                 user_typed_string = user_typed_string[:-1]
 
-        # Creates a list of sub-strings from the user input string so it can be displayed over the top of the prompt.
-        n = [len(i) for i in typing_prompt]
+        # Creates a list of sub-strings from the user input string so it can be correctly displayed over the top of the prompt.
+        sub_numbers = [len(i) for i in typing_prompt]
         wrapped_user_typed = [user_typed_string[sum(
-            n[:i]):sum(n[:i+1])] for i in range(len(n))]
+            sub_numbers[:i]):sum(sub_numbers[:i+1])] for i in range(len(sub_numbers))]
 
         # Clear screen so new text can be drawn
         window.erase()
 
         # Draw menu directions to screen
         window.addstr(
-            0, 0, "Press 'esc' to exit, 'enter' to return to menu", curses.color_pair(2))
+            0, 0, "Press 'esc' to exit, 'enter' to return to menu - score will not be saved", curses.color_pair(2))
 
         print_screen(window, typing_prompt, wrapped_user_typed,
                      text_start_x, text_start_y)
