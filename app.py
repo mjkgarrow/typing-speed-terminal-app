@@ -79,8 +79,22 @@ def draw(window, text, text_start_x, text_start_y):
                       text[i])
 
 
-def calculate_wpm(wrapped_user_typed):
-    pass
+def calculate_wpm(prompt, user, time_in_seconds):
+    if len(user) == 0:
+        return (0, 0, 0)
+
+    # minutes = time_in_seconds/60
+    # gross_wpm = int((user_length/5)/minutes)
+
+    errors = 0
+    for i in range(len(user)):
+        if user[i] != prompt[i]:
+            errors += 1
+
+    # net_wpm = int(gross_wpm - (errors/minutes))
+    net_wpm = int(((len(user)/5) - errors)/(time_in_seconds/60))
+    accuracy = round(((len(user) - errors)/len(user)) * 100, 1)
+    return (net_wpm, accuracy)
 
 
 def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, text_start_y):
@@ -237,6 +251,9 @@ def main(window):
     started = False
     finished_typing = False
 
+    # Boolean for the difficulty setting, False = easy, True = hard
+    hard_mode = False
+
     # Variable to store user input
     user_typed_string = ""
     while True:
@@ -252,6 +269,14 @@ def main(window):
                         "Goodbye", curses.color_pair(2))
             time.sleep(1)
             quit()
+        elif key == 9:  # Check if key is 'tab', change hard mode
+            if started:
+                continue
+            else:
+                if hard_mode:
+                    hard_mode = False
+                else:
+                    hard_mode = True
         elif key == 10 or key == 13:  # Check if 'enter' key hit, clears input and returns to main menu
             user_typed_string = ""
             typing_prompt = menu(window, text_start_x, text_start_y, max_width)
@@ -283,16 +308,30 @@ def main(window):
         # Clear screen so new text can be drawn
         window.erase()
 
-        # Draw menu directions to screen
+        # Draw directions to screen
         window.addstr(
             0, 0, "Press 'esc' to exit, 'enter' to return to menu - score will not be saved", curses.color_pair(2))
+        window.addstr(
+            1, 0, "For hard mode press 'tab'", curses.color_pair(2))
+
+        if hard_mode:
+            window.clrtoeol()
+            window.addstr(
+                1, 0, "Difficulty: HARD (press 'tab' to return to easy mode)", curses.color_pair(2))
 
         # Game time mechanic
         if started:
             # TODO print countdown, print wpm, print accuracy
+            # Print countdown timer
             countdown = str(60 - (int(time.time() - start)))
+            window.addstr(text_start_y - 2, text_start_x,
+                          f"Time remaining - {countdown}", curses.color_pair(2))
+
+            # Print WPM
+            wpm = calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
+                user_typed_wrapped), 61 - int(countdown))
             window.addstr(text_start_y - 1, text_start_x,
-                          countdown, curses.color_pair(2))
+                          f"WPM: {wpm[0]}, Accuracy: {wpm[1]}%", curses.color_pair(2))
             # Check if game time is finished or user has finished typing
             if int(countdown) <= 0 or finished_typing:
                 # TODO go to finished screen
