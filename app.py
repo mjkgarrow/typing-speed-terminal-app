@@ -34,6 +34,12 @@ def get_window_sizes():
     return [max_width, text_start_x, text_start_y]
 
 
+def shutdown(window, x, y):
+    quick_print(window, x, y, "Goodbye", curses.color_pair(2))
+    sleep(1)
+    quit()
+
+
 def load_file(window):
     '''Loads prompt txt file from within app directory, returns a string of file contents'''
     window.nodelay(True)
@@ -149,8 +155,20 @@ def save_high_score(window, wpm, accuracy, x, y):
     while True:
 
         key = window.getch()
+
         if 32 <= key < 126:  # Check if key is alphanumeric/punctuation
             user += chr(key)
+        elif key == 127:
+            if len(user) > 0:
+                user = user[:-1]
+        elif key == 10 or key == 13:  # Check if enter key
+            with open("scores.txt", "w") as f:
+                # TODO record score and order based on WPM
+                pass
+        elif key == 27:  # Check if key is 'esc', returns to main menu
+            return 1
+
+        quick_print(window, x, y, f"User name: {user} // Press enter to save")
 
 
 def final_screen(window, wpm_values, wpm, accuracy, x, y):
@@ -176,14 +194,10 @@ def final_screen(window, wpm_values, wpm, accuracy, x, y):
         key = window.getch()
 
         if key == 27:  # Check if key is 'esc', quits immediately
-            quick_print(window, x, y,
-                        "Goodbye", curses.color_pair(2))
-            sleep(1)
-            quit()
-        elif key == 115:
-            save_high_score()
-            return 1
-        elif key == 10 or key == 13:
+            shutdown(window, x, y)
+        elif key == 115:  # Check if key is 's', return to save file
+            return 2
+        elif key == 10 or key == 13:  # Check if key is 'enter' return to menu
             return 1
 
 
@@ -290,12 +304,7 @@ def menu(window, x, y):
                 # Wait for user input
                 window.getch()
             case 53:  # If user presses 5
-                # Print goodbye message
-                quick_print(
-                    window, x, y, "Goodbye", curses.color_pair(2))
-                # Wait a second and quit
-                sleep(1)
-                quit()
+                shutdown(window, x, y)
 
 
 def main(window):
@@ -345,10 +354,7 @@ def main(window):
 
         key = window.getch()
         if key == 27:  # Check if key is 'esc', quits immediately
-            quick_print(window, text_start_x, text_start_y,
-                        "Goodbye", curses.color_pair(2))
-            sleep(1)
-            quit()
+            shutdown(window, text_start_x, text_start_y)
         elif key == 9:  # Check if key is 'tab', change difficulty mode
             if start != None:
                 continue
@@ -427,8 +433,7 @@ def main(window):
 
             # Check if game time is finished or user has finished typing
             if int(countdown) == 0 or finished_typing:
-                # TODO go to finished screen
-                # Generate final screen with stat
+                # Generate final screen with stats
                 restart = final_screen(window, wpm_values,
                                        wpm[1], wpm[2], text_start_x, text_start_y)
                 if restart == 1:
@@ -442,6 +447,19 @@ def main(window):
                     # Return to menu
                     typing_prompt = menu(window, text_start_x, text_start_y)
                     continue
+                elif restart == 2:
+                    if save_high_score(
+                            window, wpm[1], wpm[2], text_start_x, text_start_y) == 1:
+                        # Clear user typed string
+                        user_typed_string = ""
+                        # Reset timer and finished typing
+                        start = None
+                        finished_typing = False
+                        # Erase screen
+                        window.erase()
+                        # Return to menu
+                        typing_prompt = menu(
+                            window, text_start_x, text_start_y)
 
         # Draw typing test on screen
         print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,
