@@ -1,9 +1,11 @@
+# from curses import wrapper, init_pair, color_pair, curs_set, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_MAGENTA, COLOR_RED, COLOR_WHITE
 import curses
-import time
-import os
-import textwrap
-import requests
-import random
+from time import time, sleep
+from os import environ, get_terminal_size
+from textwrap import wrap
+from requests import get
+from random import randint
+from numpy import mean, var
 
 
 # Create requirements
@@ -11,7 +13,8 @@ import random
 
 
 def check_valid_terminal():
-    window_size = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
+    ''' Checks if valid terminal size'''
+    window_size = [get_terminal_size()[0], get_terminal_size()[1]]
     if window_size[0] <= 75 or window_size[1] <= 20:
         return False
     else:
@@ -19,9 +22,14 @@ def check_valid_terminal():
 
 
 def get_window_sizes():
-    # Get terminal window size and calculate the max width of the text, plus the centring coordinates
-    window_size = [os.get_terminal_size()[0], os.get_terminal_size()[1]]
+    ''' Find the size of the terminal window and calculate maximum string width and starting positions'''
+    # Get terminal window size [width, height]
+    window_size = [get_terminal_size()[0], get_terminal_size()[1]]
+
+    # Calculate max width
     max_width = int(window_size[0]//1.3)
+
+    # Calculate starting positions based on width and window size
     text_start_x = int((window_size[0] - max_width)//2)
     text_start_y = int(window_size[1] * 0.3)
     return [max_width, text_start_x, text_start_y]
@@ -76,7 +84,24 @@ def draw(window, text, text_start_x, text_start_y):
                       text[i])
 
 
+def measure_consistency(wpm_values):
+    # Calculate the mean of the wpm values
+    wpm_mean = mean(wpm_values)
+
+    # Calculate the variance of the wpm values
+    wpm_variance = var(wpm_values)
+
+    # Calculate the coefficient of variation
+    wpm_cv = wpm_variance / wpm_mean
+
+    # Map the coefficient of variation onto a scale from 0 to 100
+    consistency = 100 - (wpm_cv * 100)
+
+    return consistency
+
+
 def calculate_wpm(prompt, user, time_in_seconds):
+    ''' Calculates words-per-minute, accuracy, and consistency'''
     if len(user) == 0:
         return (0, 0, 0)
 
@@ -86,11 +111,12 @@ def calculate_wpm(prompt, user, time_in_seconds):
             errors += 1
 
     # net_wpm = int(gross_wpm - (errors/minutes))
+    gross_wpm = int((len(user)/5)/(time_in_seconds/60))
     net_wpm = int(((len(user)/5) - errors)/(time_in_seconds/60))
     if net_wpm < 0:
         net_wpm = 0
     accuracy = round(((len(user) - errors)/len(user)) * 100, 1)
-    return (net_wpm, accuracy)
+    return (gross_wpm, net_wpm, accuracy)
 
 
 def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, text_start_y):
@@ -113,6 +139,10 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
             else:
                 window.addstr(text_start_y + line, text_start_x +
                               char, wrapped_user_typed[line][char], colour)
+
+
+def final_screen(window, wpm):
+    pass
 
 
 def menu(window, x, y, max_width):
@@ -169,20 +199,20 @@ def menu(window, x, y, max_width):
                 # Request a wordlist from MIT API
                 try:
                     # Try make request and generate list of all words from the response
-                    response = requests.get(
+                    response = get(
                         "https://www.mit.edu/~ecprice/wordlist.10000").content.splitlines()
                 except:
                     # Tell user why request failed
                     quick_print(
                         window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
-                    time.sleep(2)
+                    sleep(2)
                     continue
 
                 # Create a list of 50 random words from response
                 word_selection = []
                 for i in range(50):
                     word_selection.append(
-                        str(response[random.randint(0, len(response))])[2:-1])
+                        str(response[randint(0, len(response))])[2:-1])
 
                 # Return string of word selection
                 return " ".join(word_selection)
@@ -193,16 +223,16 @@ def menu(window, x, y, max_width):
                 # Request a wordlist from Quotes API
                 try:
                     # Try make request and generate a json from response
-                    response = requests.get(
+                    response = get(
                         "https://type.fit/api/quotes").json()
                 except:
                     # Tell user why request failed
                     quick_print(window, x, y, "Unable to load quotes, sorry!")
-                    time.sleep(2)
+                    sleep(2)
                     continue
 
                 # Select a random quote from response
-                quote = response[random.randint(0, len(response))]
+                quote = response[randint(0, len(response))]
 
                 # Return string of quote
                 return f"{quote['text']} - {quote['author']}"
@@ -222,7 +252,7 @@ def menu(window, x, y, max_width):
                 quick_print(
                     window, x, y, "Goodbye", curses.color_pair(2))
                 # Wait a second and quit
-                time.sleep(1)
+                sleep(1)
                 quit()
 
 
@@ -256,6 +286,7 @@ def main(window):
 
     # Variable to store user input
     user_typed_string = ""
+
     while True:
 
         window_sizes = get_window_sizes()
@@ -267,7 +298,7 @@ def main(window):
         if key == 27:  # Check if key is 'esc', quits immediately
             quick_print(window, text_start_x, text_start_y,
                         "Goodbye", curses.color_pair(2))
-            time.sleep(1)
+            sleep(1)
             quit()
         elif key == 9:  # Check if key is 'tab', change difficulty mode
             if started:
@@ -284,7 +315,7 @@ def main(window):
             # Check if first input, start typing timer
             if len(user_typed_string) == 0:
                 started = True
-                start = time.time()
+                start = time()
             user_typed_string += chr(key)
         elif key == 127:  # Check if key is backspace, remove from user input
             if hard_mode:
@@ -292,7 +323,7 @@ def main(window):
             if len(user_typed_string) > 0:
                 user_typed_string = user_typed_string[:-1]
 
-        typing_prompt_wrapped = textwrap.wrap(
+        typing_prompt_wrapped = wrap(
             typing_prompt, max_width, drop_whitespace=False)
 
         # Creates a list of sub-strings from the user input string so it can be correctly displayed over the top of the prompt.
@@ -325,7 +356,7 @@ def main(window):
         # Game mechanics and stats
         if started:
             # Print countdown timer
-            countdown = str(60 - (int(time.time() - start)))
+            countdown = str(60 - (int(time() - start)))
             window.addstr(text_start_y - 2, text_start_x,
                           f"Time remaining: {countdown}", curses.color_pair(2))
 
@@ -333,11 +364,12 @@ def main(window):
             wpm = calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
                 user_typed_wrapped), 61 - int(countdown))
             window.addstr(text_start_y - 1, text_start_x,
-                          f"WPM: {wpm[0]}, Accuracy: {wpm[1]}%", curses.color_pair(2))
+                          f"Total WPM: {wpm[0]}, Correct WPM: {wpm[1]}, Accuracy: {wpm[2]}%", curses.color_pair(2))
 
             # Check if game time is finished or user has finished typing
             if int(countdown) <= 0 or finished_typing:
                 # TODO go to finished screen
+                final_screen()
                 quit()
 
         # Draw typing test on screen
@@ -350,8 +382,9 @@ def main(window):
 
 if __name__ == "__main__":
     # Sets delay on escape key to 25 milliseconds
-    os.environ.setdefault("ESCDELAY", "25")
+    environ.setdefault("ESCDELAY", "25")
 
+    # Checks terminal is a valid size
     if check_valid_terminal():
         # Calls the main function
         curses.wrapper(main)
