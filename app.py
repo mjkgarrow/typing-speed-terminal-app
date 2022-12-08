@@ -1,4 +1,3 @@
-# from curses import wrapper, init_pair, color_pair, curs_set, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_MAGENTA, COLOR_RED, COLOR_WHITE
 import curses
 from time import time, sleep
 from os import environ, get_terminal_size, listdir, getcwd
@@ -85,11 +84,15 @@ def draw(window, text, text_start_x, text_start_y):
 
 
 def measure_consistency(wpm_values):
+    ''' Calculates typing consistency based on the variation of wpm from 0 - 100%'''
     # Calculate the mean of the wpm values
     wpm_mean = mean(wpm_values)
 
     # Calculate the variance of the wpm values
     wpm_variance = var(wpm_values)
+
+    if wpm_mean == 0 or wpm_variance == 0:
+        return 0
 
     # Calculate the coefficient of variation
     wpm_coefficient = wpm_variance / wpm_mean
@@ -141,12 +144,50 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
                               char, wrapped_user_typed[line][char], colour)
 
 
-def final_screen(window, wpm_values):
-    consistency = measure_consistency(wpm_values)
-    pass
+def save_high_score(window, wpm, accuracy, x, y):
+    user = ""
+    while True:
+
+        key = window.getch()
+        if 32 <= key < 126:  # Check if key is alphanumeric/punctuation
+            user += chr(key)
 
 
-def menu(window, x, y, max_width):
+def final_screen(window, wpm_values, wpm, accuracy, x, y):
+    while True:
+        # Clear screen
+        window.erase()
+
+        # Calculate consistency percentage
+        consistency = measure_consistency(wpm_values)
+
+        # Print stats
+        window.addstr(
+            y - 1, x, "Well done! Here are your typing speed stats", curses.color_pair(4))
+        statistics = [f"Your words per minute: {wpm}",
+                      f"Your accuracy: {accuracy}%",
+                      f"Your consistency: {consistency}%",
+                      "",
+                      "To save score press 's'.",
+                      "",
+                      "Press 'esc' to quit or 'enter' to return to menu"]
+        draw(window, statistics, x, y + 1)
+
+        key = window.getch()
+
+        if key == 27:  # Check if key is 'esc', quits immediately
+            quick_print(window, x, y,
+                        "Goodbye", curses.color_pair(2))
+            sleep(1)
+            quit()
+        elif key == 115:
+            save_high_score()
+            return 1
+        elif key == 10 or key == 13:
+            return 1
+
+
+def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
     # Update delay so that program waits on user input
     window.nodelay(False)
@@ -273,7 +314,7 @@ def main(window):
                      curses.COLOR_BLACK)  # magenta text
 
     # Ask user for menu choice, return a typing prompt
-    typing_prompt = menu(window, text_start_x, text_start_y, max_width)
+    typing_prompt = menu(window, text_start_x, text_start_y)
 
     # Booleans for checking if game has started and ended
     start = None
@@ -322,7 +363,7 @@ def main(window):
             # Reset timer
             start = None
             # Return to menu
-            typing_prompt = menu(window, text_start_x, text_start_y, max_width)
+            typing_prompt = menu(window, text_start_x, text_start_y)
         elif 32 <= key < 126:  # Check if key is alphanumeric/punctuation, add to user input
             # Check if first input, start typing timer
             if len(user_typed_string) == 0:
@@ -385,10 +426,22 @@ def main(window):
                 typed = False
 
             # Check if game time is finished or user has finished typing
-            if int(countdown) <= 0 or finished_typing:
+            if int(countdown) == 0 or finished_typing:
                 # TODO go to finished screen
                 # Generate final screen with stat
-                final_screen(window, wpm_values)
+                restart = final_screen(window, wpm_values,
+                                       wpm[1], wpm[2], text_start_x, text_start_y)
+                if restart == 1:
+                    # Clear user typed string
+                    user_typed_string = ""
+                    # Reset timer and finished typing
+                    start = None
+                    finished_typing = False
+                    # Erase screen
+                    window.erase()
+                    # Return to menu
+                    typing_prompt = menu(window, text_start_x, text_start_y)
+                    continue
 
         # Draw typing test on screen
         print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,
