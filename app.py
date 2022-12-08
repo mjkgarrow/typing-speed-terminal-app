@@ -1,7 +1,7 @@
 # from curses import wrapper, init_pair, color_pair, curs_set, COLOR_BLACK, COLOR_BLUE, COLOR_GREEN, COLOR_MAGENTA, COLOR_RED, COLOR_WHITE
 import curses
 from time import time, sleep
-from os import environ, get_terminal_size
+from os import environ, get_terminal_size, listdir, getcwd
 from textwrap import wrap
 from requests import get
 from random import randint
@@ -47,7 +47,7 @@ def load_file(window):
             return 0
 
         # Search through directory to find a file
-        for file in os.listdir(os.getcwd()):
+        for file in listdir(getcwd()):
             if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
                 with open(file, 'r') as f:
                     lines = f.read().splitlines()
@@ -56,7 +56,7 @@ def load_file(window):
 
 def load_high_score():
     ''' Loads scores file and returns list of scores'''
-    file_list = os.listdir(os.getcwd())
+    file_list = listdir(getcwd())
     if "scores.txt" in file_list:
         with open("scores.txt", 'r') as f:
             return f.read().splitlines()
@@ -92,10 +92,10 @@ def measure_consistency(wpm_values):
     wpm_variance = var(wpm_values)
 
     # Calculate the coefficient of variation
-    wpm_cv = wpm_variance / wpm_mean
+    wpm_coefficient = wpm_variance / wpm_mean
 
     # Map the coefficient of variation onto a scale from 0 to 100
-    consistency = 100 - (wpm_cv * 100)
+    consistency = 100 - (wpm_coefficient * 100)
 
     return consistency
 
@@ -141,7 +141,8 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
                               char, wrapped_user_typed[line][char], colour)
 
 
-def final_screen(window, wpm):
+def final_screen(window, wpm_values):
+    consistency = measure_consistency(wpm_values)
     pass
 
 
@@ -257,7 +258,7 @@ def menu(window, x, y, max_width):
 
 
 def main(window):
-
+    # Calculate window sizes to start game
     window_sizes = get_window_sizes()
     max_width = window_sizes[0]
     text_start_x = window_sizes[1]
@@ -274,21 +275,28 @@ def main(window):
     # Ask user for menu choice, return a typing prompt
     typing_prompt = menu(window, text_start_x, text_start_y, max_width)
 
-    # Update delay so that program isn't waiting on user input
-    window.nodelay(True)
-
-    # Boolean for checking if game has started and ended
-    started = False
+    # Booleans for checking if game has started and ended
+    start = None
     finished_typing = False
 
     # Boolean for the difficulty setting, False = easy, True = hard
     hard_mode = False
 
+    # Boolean for use to detect if a user pressed a key
+    typed = False
+
     # Variable to store user input
     user_typed_string = ""
 
+    # Variable to store wpm each time a user types something, used by the consistency function
+    wpm_values = []
+
     while True:
 
+        # Update delay so that program isn't waiting on user input
+        window.nodelay(True)
+
+        # Calculate window sizes in while loop so terminal window is adaptive
         window_sizes = get_window_sizes()
         max_width = window_sizes[0]
         text_start_x = window_sizes[1]
@@ -301,22 +309,27 @@ def main(window):
             sleep(1)
             quit()
         elif key == 9:  # Check if key is 'tab', change difficulty mode
-            if started:
+            if start != None:
                 continue
             else:
                 if hard_mode:
                     hard_mode = False
                 else:
                     hard_mode = True
-        elif key == 10 or key == 13:  # Check if 'enter' key hit, clears input and returns to main menu
+        elif key == 10 or key == 13:  # Check if 'enter' key hit, return to menu
+            # Clear user typed string
             user_typed_string = ""
+            # Reset timer
+            start = None
+            # Return to menu
             typing_prompt = menu(window, text_start_x, text_start_y, max_width)
         elif 32 <= key < 126:  # Check if key is alphanumeric/punctuation, add to user input
             # Check if first input, start typing timer
             if len(user_typed_string) == 0:
-                started = True
+                # started = True
                 start = time()
             user_typed_string += chr(key)
+            typed = True
         elif key == 127:  # Check if key is backspace, remove from user input
             if hard_mode:
                 continue
@@ -354,9 +367,9 @@ def main(window):
                 1, 0, "Difficulty: EASY ('tab' to change)", curses.color_pair(2))
 
         # Game mechanics and stats
-        if started:
+        if start != None:
             # Print countdown timer
-            countdown = str(60 - (int(time() - start)))
+            countdown = str(30 - (int(time() - start)))
             window.addstr(text_start_y - 2, text_start_x,
                           f"Time remaining: {countdown}", curses.color_pair(2))
 
@@ -366,11 +379,16 @@ def main(window):
             window.addstr(text_start_y - 1, text_start_x,
                           f"Total WPM: {wpm[0]}, Correct WPM: {wpm[1]}, Accuracy: {wpm[2]}%", curses.color_pair(2))
 
+            # Store wpm value each time user types a char so consistency value can be computed
+            if typed == True:
+                wpm_values.append(wpm[1])
+                typed = False
+
             # Check if game time is finished or user has finished typing
             if int(countdown) <= 0 or finished_typing:
                 # TODO go to finished screen
-                final_screen()
-                quit()
+                # Generate final screen with stat
+                final_screen(window, wpm_values)
 
         # Draw typing test on screen
         print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,
