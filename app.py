@@ -14,7 +14,7 @@ from numpy import mean, var
 def check_valid_terminal():
     ''' Checks if valid terminal size'''
     window_size = [get_terminal_size()[0], get_terminal_size()[1]]
-    if window_size[0] <= 75 or window_size[1] <= 20:
+    if window_size[0] <= 75 or window_size[1] <= 15:
         return False
     else:
         return True
@@ -150,8 +150,12 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
                               char, wrapped_user_typed[line][char], colour)
 
 
-def save_high_score(window, wpm, accuracy, x, y):
+def save_high_score(window, wpm, accuracy, difficulty, x, y):
     user = ""
+    if difficulty == True:
+        difficulty = "Hard mode"
+    else:
+        difficulty = "Easy mode"
     while True:
 
         key = window.getch()
@@ -162,9 +166,31 @@ def save_high_score(window, wpm, accuracy, x, y):
             if len(user) > 0:
                 user = user[:-1]
         elif key == 10 or key == 13:  # Check if enter key
-            with open("scores.txt", "w") as f:
-                # TODO record score and order based on WPM
-                pass
+            # Search for previous scores file
+            if "scores.txt" in listdir(getcwd()):
+                # Open file and read scores into a variable
+                with open("scores.txt", "r+") as file_in:
+                    scores = file_in.readlines()
+                    # Add the new score to the list of scores
+                    scores.append(
+                        f"{user}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
+                    # Sort the scores again based on accuracy
+                    scores.sort(key=lambda x: float(
+                        x.split(": ")[-1].split(", ")[1][:-10]), reverse=True)
+                    # Sort the scores again based on difficulty (this keeps the original accuracy order if two are the same)
+                    scores.sort(key=lambda x: x.split(": ")[-1].split(", ")[2])
+                    # Sort the scores again based on wpm (keeping original order of accuracy and difficulty)
+                    scores.sort(key=lambda x: int(
+                        x.split(": ")[-1].split(",")[0][:-3]), reverse=True)
+                with open("scores.txt", "w") as file_out:
+                    for line in scores:
+                        print(line, file=file_out)
+                return 1
+            else:
+                with open("scores.txt", "w") as new_file:
+                    new_file.write(
+                        f"{user}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
+                return 1
         elif key == 27:  # Check if key is 'esc', returns to main menu
             return 1
 
@@ -211,7 +237,7 @@ def menu(window, x, y):
 
     while True:
         menu_text = ["Welcome to Keebz-Typerz, a typing game to test your skills",
-                     "Please select a number from the following options:",
+                     "Please select an option from the menu:",
                      "1. Test from file",
                      "2. Test random words",
                      "3. Test a quote",
@@ -236,7 +262,7 @@ def menu(window, x, y):
             case 49:  # If user presses 1
                 # Tell user to include text-file in app directory
                 quick_print(
-                    window, x, y, "Copy '.txt' file to app directory to load text")
+                    window, x, y, "Please copy a '.txt' file to the app directory to load text")
 
                 # Draw option to return to menu
                 window.addstr(
@@ -332,7 +358,7 @@ def main(window):
     # Boolean for the difficulty setting, False = easy, True = hard
     hard_mode = False
 
-    # Boolean for use to detect if a user pressed a key
+    # Boolean for detect if a user pressed a key
     typed = False
 
     # Variable to store user input
@@ -449,7 +475,7 @@ def main(window):
                     continue
                 elif restart == 2:
                     if save_high_score(
-                            window, wpm[1], wpm[2], text_start_x, text_start_y) == 1:
+                            window, wpm[1], wpm[2], hard_mode, text_start_x, text_start_y) == 1:
                         # Clear user typed string
                         user_typed_string = ""
                         # Reset timer and finished typing
