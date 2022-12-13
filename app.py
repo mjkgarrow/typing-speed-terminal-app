@@ -16,8 +16,7 @@ def check_valid_terminal():
     window_size = [get_terminal_size()[0], get_terminal_size()[1]]
     if window_size[0] <= 75 or window_size[1] <= 15:
         return False
-    else:
-        return True
+    return True
 
 
 def get_window_sizes():
@@ -35,12 +34,13 @@ def get_window_sizes():
 
 
 def shutdown(window, x, y):
+    ''' Displays a goodbye message and quits the program'''
     quick_print(window, x, y, "Goodbye", curses.color_pair(2))
     sleep(1)
     quit()
 
 
-def load_file(window):
+def load_input_file(window):
     '''Loads prompt txt file from within app directory, returns a string of file contents'''
     window.nodelay(True)
     while True:
@@ -65,13 +65,11 @@ def load_high_score():
     if "scores.txt" in file_list:
         with open("scores.txt", 'r') as f:
             return f.read().splitlines()
-
-    else:
-        return ["No high scores."]
+    return ["No high scores."]
 
 
 def quick_print(window, x, y, text, colour=None):
-    ''' Clears screen and types supplied text'''
+    ''' Clears screen and types supplied text with colour option'''
     window.erase()
     if colour:
         window.addstr(
@@ -109,22 +107,32 @@ def measure_consistency(wpm_values):
     return consistency
 
 
-def calculate_wpm(prompt, user, time_in_seconds):
+def calculate_wpm(prompt, user_typed, time_in_seconds):
     ''' Calculates words-per-minute, accuracy, and consistency'''
-    if len(user) == 0:
+    # The function may be called with a user input of 0 characters, so return 0 instead of running the algorithm
+    if len(user_typed) == 0:
         return (0, 0, 0)
 
+    # To calculate wpm first the number of mistakes needs to be found
     errors = 0
-    for i in range(len(user)):
-        if user[i] != prompt[i]:
+    for i in range(len(user_typed)):
+        if user_typed[i] != prompt[i]:
             errors += 1
 
-    # net_wpm = int(gross_wpm - (errors/minutes))
-    gross_wpm = int((len(user)/5)/(time_in_seconds/60))
-    net_wpm = int(((len(user)/5) - errors)/(time_in_seconds/60))
+    # Gross WPM is how fast you are typing with no error penalties
+    gross_wpm = int((len(user_typed)/5)/(time_in_seconds/60))
+
+    # Net WPM uses the Gross WPM and adds an error penalty
+    # This means you don't get a high score by just typing nonsense characters
+    net_wpm = int(((len(user_typed)/5) - errors)/(time_in_seconds/60))
+
+    # Net WPM can go negative, but wpm only goes to 0
     if net_wpm < 0:
         net_wpm = 0
-    accuracy = round(((len(user) - errors)/len(user)) * 100, 1)
+
+    # Accuracy is the percentage of correctly typed characters
+    accuracy = round(((len(user_typed) - errors)/len(user_typed)) * 100, 1)
+
     return (gross_wpm, net_wpm, accuracy)
 
 
@@ -150,57 +158,106 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
                               char, wrapped_user_typed[line][char], colour)
 
 
-def save_high_score(window, wpm, accuracy, difficulty, x, y):
-    user = ""
+def sort_scores(scores):
+    ''' Sorts scores in descending order by wpm/difficulty/accuracy'''
+    # Sort the scores based on accuracy
+    scores.sort(key=lambda x: float(
+        x.split(": ")[-1].split(", ")[1][:-10]), reverse=True)
+    # Sort the scores again based on difficulty (this keeps the original accuracy order if two are the same)
+    scores.sort(key=lambda x: x.split(": ")[-1].split(", ")[2])
+    # Do a final sort of the scores based on wpm (keeping original order of accuracy and difficulty)
+    scores.sort(key=lambda x: int(
+        x.split(": ")[-1].split(",")[0][:-3]), reverse=True)
+    return scores
+
+
+def save_score_to_file(username, wpm, accuracy, difficulty):
+    ''' Opens or creates a file, sorts the scores by wpm/accuracy/difficulty, saves scores to file'''
+    # Check if scores file already exists
+    if "scores.txt" in listdir(getcwd()):
+        # Open file and read scores into a variable
+        with open("scores.txt", "r+") as file_in:
+            scores = file_in.readlines()
+            # Add the new score to the list of scores
+            scores.append(
+                f"{username}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
+            # Sort the scores
+            sorted_scores = sort_scores(scores)
+        # Truncate scores.txt file and re-write sorted scores to it
+        with open("scores.txt", "w") as file_out:
+            for score in sorted_scores:
+                print(score, file=file_out)
+        return 1
+    # If scores file doesn't exist, create it and add new score
+    else:
+        with open("scores.txt", "w") as new_file:
+            new_file.write(
+                f"{username}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
+        return 2
+
+
+def username_unused(username):
+    ''' Checks if submitted username has already been used'''
+    if "scores.txt" in listdir(getcwd()):
+        # Open file and read scores into a variable
+        with open("scores.txt", "r") as file_in:
+            names = file_in.readlines()
+            for name in names:
+                if username == name.split(": ")[0]:
+                    return False
+            return True
+    return True
+
+
+def save_score_menu(window, wpm, accuracy, difficulty, x, y):
+    ''' Displays menu to save score, prevents doubled user names'''
+    # Stores username of player
+    username = ""
+
+    # Stores difficulty mode
     if difficulty == True:
         difficulty = "Hard mode"
     else:
         difficulty = "Easy mode"
-    while True:
 
+    # Loop to get input
+    while True:
+        # Get user input
         key = window.getch()
 
         if 32 <= key < 126:  # Check if key is alphanumeric/punctuation
-            user += chr(key)
-        elif key == 127:
-            if len(user) > 0:
-                user = user[:-1]
+            # Add to username
+            username += chr(key)
+        elif key == 127:  # Check if key is backspace
+            # Remove from username
+            if len(username) > 0:
+                username = username[:-1]
         elif key == 10 or key == 13:  # Check if enter key
-            # Search for previous scores file
-            if "scores.txt" in listdir(getcwd()):
-                # Open file and read scores into a variable
-                with open("scores.txt", "r+") as file_in:
-                    scores = file_in.readlines()
-                    # Add the new score to the list of scores
-                    scores.append(
-                        f"{user}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
-                    # Sort the scores again based on accuracy
-                    scores.sort(key=lambda x: float(
-                        x.split(": ")[-1].split(", ")[1][:-10]), reverse=True)
-                    # Sort the scores again based on difficulty (this keeps the original accuracy order if two are the same)
-                    scores.sort(key=lambda x: x.split(": ")[-1].split(", ")[2])
-                    # Sort the scores again based on wpm (keeping original order of accuracy and difficulty)
-                    scores.sort(key=lambda x: int(
-                        x.split(": ")[-1].split(",")[0][:-3]), reverse=True)
-                with open("scores.txt", "w") as file_out:
-                    for line in scores:
-                        print(line, file=file_out)
+            # Check username isn't used
+            if username_unused(username):
+                # Save score to file
+                save_score_to_file(username, wpm, accuracy, difficulty)
                 return 1
             else:
-                with open("scores.txt", "w") as new_file:
-                    new_file.write(
-                        f"{user}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
-                return 1
+                # If username used, prompt for new username
+                quick_print(
+                    window, x, y, f"{username} IS TAKEN, PLEASE CHOOSE A DIFFERENT NAME", curses.color_pair(3))
+                sleep(2)
+                continue
         elif key == 27:  # Check if key is 'esc', returns to main menu
             return 1
 
-        quick_print(window, x, y, f"User name: {user} // Press enter to save")
+        quick_print(
+            window, x, y, f"User name: {username} // Press enter to save")
 
 
 def final_screen(window, wpm_values, wpm, accuracy, x, y):
+    ''' Displays final results of game and asks if you want to save score'''
+
+    # Clear screen
+    window.erase()
+
     while True:
-        # Clear screen
-        window.erase()
 
         # Calculate consistency percentage
         consistency = measure_consistency(wpm_values)
@@ -269,7 +326,7 @@ def menu(window, x, y):
                     0, 0, "Press 'enter' to return to menu", curses.color_pair(2))
                 window.refresh()
                 # Attempt to load the text file
-                file_text = load_file(window)
+                file_text = load_input_file(window)
 
                 # If the file was correctly loaded, return the contents
                 if file_text != 0:
@@ -334,6 +391,7 @@ def menu(window, x, y):
 
 
 def main(window):
+    ''' Main app function'''
     # Calculate window sizes to start game
     window_sizes = get_window_sizes()
     max_width = window_sizes[0]
@@ -367,10 +425,11 @@ def main(window):
     # Variable to store wpm each time a user types something, used by the consistency function
     wpm_values = []
 
-    while True:
+    # Update delay so that program isn't waiting on user input
+    window.nodelay(True)
 
-        # Update delay so that program isn't waiting on user input
-        window.nodelay(True)
+    # Loop to get user input
+    while True:
 
         # Calculate window sizes in while loop so terminal window is adaptive
         window_sizes = get_window_sizes()
@@ -392,8 +451,9 @@ def main(window):
         elif key == 10 or key == 13:  # Check if 'enter' key hit, return to menu
             # Clear user typed string
             user_typed_string = ""
-            # Reset timer
+            # Reset timer and finished typing
             start = None
+            finished_typing = False
             # Return to menu
             typing_prompt = menu(window, text_start_x, text_start_y)
         elif 32 <= key < 126:  # Check if key is alphanumeric/punctuation, add to user input
@@ -420,7 +480,6 @@ def main(window):
         # Algorithm to see if user has finished typing
         prompt_length = len(''.join(typing_prompt_wrapped))
         user_typed_length = len(''.join(user_typed_wrapped))
-
         if prompt_length == user_typed_length:
             finished_typing = True
 
@@ -448,7 +507,7 @@ def main(window):
 
             # Print WPM
             wpm = calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
-                user_typed_wrapped), 61 - int(countdown))
+                user_typed_wrapped), 31 - int(countdown))
             window.addstr(text_start_y - 1, text_start_x,
                           f"Total WPM: {wpm[0]}, Correct WPM: {wpm[1]}, Accuracy: {wpm[2]}%", curses.color_pair(2))
 
@@ -474,7 +533,7 @@ def main(window):
                     typing_prompt = menu(window, text_start_x, text_start_y)
                     continue
                 elif restart == 2:
-                    if save_high_score(
+                    if save_score_menu(
                             window, wpm[1], wpm[2], hard_mode, text_start_x, text_start_y) == 1:
                         # Clear user typed string
                         user_typed_string = ""
