@@ -96,6 +96,9 @@ def measure_consistency(wpm_values):
     # Calculate the mean of the wpm values
     wpm_mean = mean(wpm_values)
 
+    if wpm_mean == 0:
+        return round(0, 2)
+
     # Calculate the standard deviation of the wpm values
     wpm_standard_deviation = std(wpm_values)
 
@@ -105,8 +108,8 @@ def measure_consistency(wpm_values):
     # Map the coefficient of variation onto a scale from 0 to 100
     consistency = 100 - (wpm_coefficient * 100)
 
-    # if consistency < -1:
-    #     return round(0, 2)
+    if consistency < 0:
+        return round(0, 2)
 
     return round(consistency, 2)
 
@@ -255,6 +258,11 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
 
         # Draw statistics on screen
         draw(window, statistics, x, y + 1)
+
+        # Position cursor to username typing area
+        window.move(y + 5, x + (len(statistics[4]) - 1))
+
+        # Refresh window with text
         window.refresh()
 
         # Get user input
@@ -276,15 +284,12 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
                 return 1
             else:
                 # If username used, prompt for new username
-                # window.erase()
-                # statistics[4] = f"{username} IS TAKEN, PLEASE CHOOSE A DIFFERENT NAME"
                 window.addstr(
                     y + 5, x, f"{username} IS TAKEN, PLEASE CHOOSE A DIFFERENT NAME", curses.color_pair(3))
-                username = ""
-                # draw(window, statistics, x, y + 1)
                 window.refresh()
                 sleep(2)
                 window.erase()
+                username = ""
         elif key == 27:  # Check if key is 'esc', returns to main menu
             return 1
 
@@ -344,7 +349,7 @@ def menu(window, x, y):
                 try:
                     # Try make request and generate list of all words from the response
                     response = get(
-                        "https://www.mit.edu/~ecprice/wordlist.10000").content.splitlines()
+                        "https://www.mit.edu/~ecprice/wordlist.10000", timeout=2).content.splitlines()
                 except:
                     # Tell user why request failed
                     quick_print(
@@ -368,10 +373,11 @@ def menu(window, x, y):
                 try:
                     # Try make request and generate a json from response
                     response = get(
-                        "https://type.fit/api/quotes").json()
+                        "https://type.fit/api/quotes", timeout=2).json()
                 except:
                     # Tell user why request failed
-                    quick_print(window, x, y, "Unable to load quotes, sorry!")
+                    quick_print(
+                        window, x, y, "Unable to load quotes, sorry!", curses.color_pair(3))
                     sleep(2)
                     continue
 
@@ -432,6 +438,9 @@ def main(window):
 
     # Update delay so that program isn't waiting on user input
     window.nodelay(True)
+
+    # Set cursor visibility so user can see where they are typing
+    curses.curs_set(1)
 
     # Loop to get user input
     while True:
@@ -547,7 +556,11 @@ def main(window):
         print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,
                           text_start_x, text_start_y)
 
-        # Display new content
+        # Position cursor at start of typing prompt
+        if start == None:
+            window.move(text_start_y, text_start_x)
+
+        # Refresh display with new content
         window.refresh()
 
 
