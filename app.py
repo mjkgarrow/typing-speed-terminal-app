@@ -4,7 +4,7 @@ from os import environ, get_terminal_size, listdir, getcwd
 from textwrap import wrap
 from requests import get
 from random import randint
-from numpy import mean, var
+from numpy import mean, std
 
 
 # Create requirements
@@ -64,7 +64,10 @@ def load_high_score():
     file_list = listdir(getcwd())
     if "scores.txt" in file_list:
         with open("scores.txt", 'r') as f:
-            return f.read().splitlines()
+            results = f.read().splitlines()
+            if len(results) == 0:
+                return ["No high scores."]
+            return results
     return ["No high scores."]
 
 
@@ -88,23 +91,24 @@ def draw(window, text, text_start_x, text_start_y):
 
 
 def measure_consistency(wpm_values):
-    ''' Calculates typing consistency based on the variation of wpm from 0 - 100%'''
+    ''' Calculates typing consistency based on the variation of wpm from 0 - 100%
+        Algorithm from https://monkeytype.com/about'''
     # Calculate the mean of the wpm values
     wpm_mean = mean(wpm_values)
 
-    # Calculate the variance of the wpm values
-    wpm_variance = var(wpm_values)
-
-    if wpm_mean == 0 or wpm_variance == 0:
-        return 0
+    # Calculate the standard deviation of the wpm values
+    wpm_standard_deviation = std(wpm_values)
 
     # Calculate the coefficient of variation
-    wpm_coefficient = wpm_variance / wpm_mean
+    wpm_coefficient = wpm_standard_deviation / wpm_mean
 
     # Map the coefficient of variation onto a scale from 0 to 100
     consistency = 100 - (wpm_coefficient * 100)
 
-    return consistency
+    # if consistency < -1:
+    #     return round(0, 2)
+
+    return round(consistency, 2)
 
 
 def calculate_wpm(prompt, user_typed, time_in_seconds):
@@ -160,44 +164,54 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
 
 def sort_scores(scores):
     ''' Sorts scores in descending order by wpm/difficulty/accuracy'''
-    # Sort the scores based on accuracy
-    scores.sort(key=lambda x: float(
-        x.split(": ")[-1].split(", ")[1][:-10]), reverse=True)
-    # Sort the scores again based on difficulty (this keeps the original accuracy order if two are the same)
-    scores.sort(key=lambda x: x.split(": ")[-1].split(", ")[2])
-    # Do a final sort of the scores based on wpm (keeping original order of accuracy and difficulty)
-    scores.sort(key=lambda x: int(
-        x.split(": ")[-1].split(",")[0][:-3]), reverse=True)
-    return scores
+    # Loop over scores to separate values so they can be sorted
+    score_list = []
+    for score in scores:
+        # Split scores up into name and results, then append to score_list
+        name = score.split(": ")[0]
+        results = score.split(": ")[-1].split(", ")
+        score_list.append([name, *results])
+
+    # Sort the new list of values
+    score_list.sort(key=lambda x: (x[1][:-3], x[4], x[2][:-10]), reverse=True)
+
+    # Recombine the list of lists back into a list of strings
+    for i in range(len(score_list)):
+        score_list[i] = f"{score_list[i][0]}: {score_list[i][1]}, {score_list[i][2]}, {score_list[i][3]}, {score_list[i][4]}"
+    return score_list
 
 
-def save_score_to_file(username, wpm, accuracy, difficulty):
+def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
     ''' Opens or creates a file, sorts the scores by wpm/accuracy/difficulty, saves scores to file'''
     # Check if scores file already exists
     if "scores.txt" in listdir(getcwd()):
         # Open file and read scores into a variable
         with open("scores.txt", "r+") as file_in:
-            scores = file_in.readlines()
+            scores = file_in.read().splitlines()
             # Add the new score to the list of scores
             scores.append(
-                f"{username}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
+                f"{username}: {wpm}wpm, {accuracy}% accuracy, {consistency}% consistency, {difficulty}")
             # Sort the scores
             sorted_scores = sort_scores(scores)
         # Truncate scores.txt file and re-write sorted scores to it
         with open("scores.txt", "w") as file_out:
             for score in sorted_scores:
                 print(score, file=file_out)
-        return 1
+        # Return sorted score list for testing purposes
+        return sorted_scores
     # If scores file doesn't exist, create it and add new score
     else:
         with open("scores.txt", "w") as new_file:
             new_file.write(
-                f"{username}: {wpm}wpm, {accuracy}% accuracy, {difficulty}")
-        return 2
+                f"{username}: {wpm}wpm, {accuracy}% accuracy, {consistency}% consistency, {difficulty}")
+        # Return score for testing purposes
+        return [f"{username}: {wpm}wpm, {accuracy}% accuracy, {consistency}% consistency, {difficulty}"]
 
 
 def username_unused(username):
     ''' Checks if submitted username has already been used'''
+    if username == "":
+        return True
     if "scores.txt" in listdir(getcwd()):
         # Open file and read scores into a variable
         with open("scores.txt", "r") as file_in:
@@ -209,8 +223,12 @@ def username_unused(username):
     return True
 
 
-def save_score_menu(window, wpm, accuracy, difficulty, x, y):
-    ''' Displays menu to save score, prevents doubled user names'''
+def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
+    ''' Displays final results of game and asks if you want to save score'''
+
+    # Clear screen
+    window.erase()
+
     # Stores username of player
     username = ""
 
@@ -220,8 +238,25 @@ def save_score_menu(window, wpm, accuracy, difficulty, x, y):
     else:
         difficulty = "Easy mode"
 
-    # Loop to get input
+    # Loop to get user input
     while True:
+        # Print congratulations
+        window.addstr(
+            y - 1, x, "Well done! Here are your typing speed stats", curses.color_pair(4))
+
+        # List of statistics
+        statistics = [f"Your words per minute: {wpm}",
+                      f"Your accuracy: {accuracy}%",
+                      f"Your consistency: {consistency}%",
+                      "",
+                      f"Type username to save score: {username} ",
+                      "",
+                      "Press 'enter' to save or 'esc' to return to menu"]
+
+        # Draw statistics on screen
+        draw(window, statistics, x, y + 1)
+        window.refresh()
+
         # Get user input
         key = window.getch()
 
@@ -236,51 +271,21 @@ def save_score_menu(window, wpm, accuracy, difficulty, x, y):
             # Check username isn't used
             if username_unused(username):
                 # Save score to file
-                save_score_to_file(username, wpm, accuracy, difficulty)
+                save_score_to_file(username, wpm, accuracy,
+                                   difficulty, consistency)
                 return 1
             else:
                 # If username used, prompt for new username
-                quick_print(
-                    window, x, y, f"{username} IS TAKEN, PLEASE CHOOSE A DIFFERENT NAME", curses.color_pair(3))
+                # window.erase()
+                # statistics[4] = f"{username} IS TAKEN, PLEASE CHOOSE A DIFFERENT NAME"
+                window.addstr(
+                    y + 5, x, f"{username} IS TAKEN, PLEASE CHOOSE A DIFFERENT NAME", curses.color_pair(3))
+                username = ""
+                # draw(window, statistics, x, y + 1)
+                window.refresh()
                 sleep(2)
-                continue
+                window.erase()
         elif key == 27:  # Check if key is 'esc', returns to main menu
-            return 1
-
-        quick_print(
-            window, x, y, f"User name: {username} // Press enter to save")
-
-
-def final_screen(window, wpm_values, wpm, accuracy, x, y):
-    ''' Displays final results of game and asks if you want to save score'''
-
-    # Clear screen
-    window.erase()
-
-    while True:
-
-        # Calculate consistency percentage
-        consistency = measure_consistency(wpm_values)
-
-        # Print stats
-        window.addstr(
-            y - 1, x, "Well done! Here are your typing speed stats", curses.color_pair(4))
-        statistics = [f"Your words per minute: {wpm}",
-                      f"Your accuracy: {accuracy}%",
-                      f"Your consistency: {consistency}%",
-                      "",
-                      "To save score press 's'.",
-                      "",
-                      "Press 'esc' to quit or 'enter' to return to menu"]
-        draw(window, statistics, x, y + 1)
-
-        key = window.getch()
-
-        if key == 27:  # Check if key is 'esc', quits immediately
-            shutdown(window, x, y)
-        elif key == 115:  # Check if key is 's', return to save file
-            return 2
-        elif key == 10 or key == 13:  # Check if key is 'enter' return to menu
             return 1
 
 
@@ -437,17 +442,17 @@ def main(window):
         text_start_x = window_sizes[1]
         text_start_y = window_sizes[2]
 
+        # Get user input
         key = window.getch()
         if key == 27:  # Check if key is 'esc', quits immediately
             shutdown(window, text_start_x, text_start_y)
         elif key == 9:  # Check if key is 'tab', change difficulty mode
             if start != None:
                 continue
+            if hard_mode:
+                hard_mode = False
             else:
-                if hard_mode:
-                    hard_mode = False
-                else:
-                    hard_mode = True
+                hard_mode = True
         elif key == 10 or key == 13:  # Check if 'enter' key hit, return to menu
             # Clear user typed string
             user_typed_string = ""
@@ -498,30 +503,35 @@ def main(window):
             window.addstr(
                 1, 0, "Difficulty: EASY ('tab' to change)", curses.color_pair(2))
 
-        # Game mechanics and stats
+        # Show game and stats once user starts typing
         if start != None:
             # Print countdown timer
             countdown = str(30 - (int(time() - start)))
             window.addstr(text_start_y - 2, text_start_x,
-                          f"Time remaining: {countdown}", curses.color_pair(2))
+                          f"Time remaining: {countdown}", curses.color_pair(3))
 
-            # Print WPM
+            # Calculate wpm and accuracy
             wpm = calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
                 user_typed_wrapped), 31 - int(countdown))
-            window.addstr(text_start_y - 1, text_start_x,
-                          f"Total WPM: {wpm[0]}, Correct WPM: {wpm[1]}, Accuracy: {wpm[2]}%", curses.color_pair(2))
 
             # Store wpm value each time user types a char so consistency value can be computed
             if typed == True:
                 wpm_values.append(wpm[1])
                 typed = False
 
+            # Calculate consistency
+            consistency = measure_consistency(wpm_values)
+
+            # Print statistics live
+            window.addstr(text_start_y - 1, text_start_x,
+                          f"Total WPM: {wpm[0]}, Correct WPM: {wpm[1]}, Accuracy: {wpm[2]}%, Consistency: {consistency}", curses.color_pair(4))
+
             # Check if game time is finished or user has finished typing
             if int(countdown) == 0 or finished_typing:
                 # Generate final screen with stats
-                restart = final_screen(window, wpm_values,
-                                       wpm[1], wpm[2], text_start_x, text_start_y)
-                if restart == 1:
+                restart = final_screen(window, consistency,
+                                       wpm[1], wpm[2], hard_mode, text_start_x, text_start_y)
+                if restart:
                     # Clear user typed string
                     user_typed_string = ""
                     # Reset timer and finished typing
@@ -532,19 +542,6 @@ def main(window):
                     # Return to menu
                     typing_prompt = menu(window, text_start_x, text_start_y)
                     continue
-                elif restart == 2:
-                    if save_score_menu(
-                            window, wpm[1], wpm[2], hard_mode, text_start_x, text_start_y) == 1:
-                        # Clear user typed string
-                        user_typed_string = ""
-                        # Reset timer and finished typing
-                        start = None
-                        finished_typing = False
-                        # Erase screen
-                        window.erase()
-                        # Return to menu
-                        typing_prompt = menu(
-                            window, text_start_x, text_start_y)
 
         # Draw typing test on screen
         print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,
