@@ -16,7 +16,7 @@ This Python CLI program tests the user's typing speed with prompts from the user
 
 Run:
 ```
-keebztyper.sh
+script.sh
 ```
 
 
@@ -32,6 +32,7 @@ This program uses the following Python packages:
 - textwrap
 - requests
 - random
+- numpy
 
 ---
 

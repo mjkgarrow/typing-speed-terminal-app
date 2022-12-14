@@ -40,23 +40,14 @@ def shutdown(window, x, y):
     quit()
 
 
-def load_input_file(window):
+def load_input_file():
     '''Loads prompt txt file from within app directory, returns a string of file contents'''
-    window.nodelay(True)
-    while True:
-        # Get user input (but don't wait for input)
-        key = window.getch()
-
-        # If 'enter' key hit then return to main menu
-        if key == 10 or key == 13:
-            return 0
-
-        # Search through directory to find a file
-        for file in listdir(getcwd()):
-            if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
-                with open(file, 'r') as f:
-                    lines = f.read().splitlines()
-                    return " ".join(lines)
+    # Search through directory to find a file
+    for file in listdir(getcwd()):
+        if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
+            with open(file, 'r') as f:
+                lines = f.read().splitlines()
+                return " ".join(lines)
 
 
 def load_high_score():
@@ -93,6 +84,10 @@ def draw(window, text, text_start_x, text_start_y):
 def measure_consistency(wpm_values):
     ''' Calculates typing consistency based on the variation of wpm from 0 - 100%
         Algorithm from https://monkeytype.com/about'''
+    # If provided an empty wpm_values list, return 0
+    if len(wpm_values) == 0:
+        return round(0, 2)
+
     # Calculate the mean of the wpm values
     wpm_mean = mean(wpm_values)
 
@@ -176,7 +171,7 @@ def sort_scores(scores):
         score_list.append([name, *results])
 
     # Sort the new list of values
-    score_list.sort(key=lambda x: (x[1][:-3], x[4], x[2][:-10]), reverse=True)
+    score_list.sort(key=lambda x: (x[1][:-3], x[2], x[3][:-10]), reverse=True)
 
     # Recombine the list of lists back into a list of strings
     for i in range(len(score_list)):
@@ -192,8 +187,10 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
         with open("scores.txt", "r+") as file_in:
             scores = file_in.read().splitlines()
             # Add the new score to the list of scores
+            # scores.append(
+            #     f"{username}: {wpm}wpm, {accuracy}% accuracy, {consistency}% consistency, {difficulty}")
             scores.append(
-                f"{username}: {wpm}wpm, {accuracy}% accuracy, {consistency}% consistency, {difficulty}")
+                f"{username}: {wpm}wpm, {difficulty}, {accuracy}% accuracy, {consistency}% consistency")
             # Sort the scores
             sorted_scores = sort_scores(scores)
         # Truncate scores.txt file and re-write sorted scores to it
@@ -206,20 +203,20 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
     else:
         with open("scores.txt", "w") as new_file:
             new_file.write(
-                f"{username}: {wpm}wpm, {accuracy}% accuracy, {consistency}% consistency, {difficulty}")
+                f"{username}: {wpm}wpm, {difficulty}, {accuracy}% accuracy, {consistency}% consistency")
         # Return score for testing purposes
-        return [f"{username}: {wpm}wpm, {accuracy}% accuracy, {consistency}% consistency, {difficulty}"]
+        return [f"{username}: {wpm}wpm, {difficulty}, {accuracy}% accuracy, {consistency}% consistency"]
 
 
 def username_unused(username):
     ''' Checks if submitted username has already been used'''
     if username == "":
-        return True
+        return False
     if "scores.txt" in listdir(getcwd()):
         # Open file and read scores into a variable
         with open("scores.txt", "r") as file_in:
-            names = file_in.readlines()
-            for name in names:
+            lines = file_in.readlines()
+            for name in lines:
                 if username == name.split(": ")[0]:
                     return False
             return True
@@ -285,7 +282,7 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
             else:
                 # If username used, prompt for new username
                 window.addstr(
-                    y + 5, x, f"{username} IS TAKEN, PLEASE CHOOSE A DIFFERENT NAME", curses.color_pair(3))
+                    y + 5, x, "CAN'T USE THAT NAME, PLEASE CHOOSE A DIFFERENT NAME", curses.color_pair(3))
                 window.refresh()
                 sleep(2)
                 window.erase()
@@ -294,15 +291,51 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
             return 1
 
 
+def load_api(url, waiting_message, response_message, window, x, y):
+    # Loading page
+    quick_print(
+        window, x, y, waiting_message)
+    # Request a wordlist from MIT API
+    try:
+        # Try make request and generate list of all words from the response
+        if "quotes" in url:
+            response = get("https://type.fit/api/quotes", timeout=2).json()
+        else:
+            response = get("https://www.mit.edu/~ecprice/wordlist.10000",
+                           timeout=2).content.splitlines()
+    except:
+        # Tell user why request failed
+        quick_print(
+            window, x, y, response_message, curses.color_pair(3))
+        sleep(2)
+        return 0
+    if "quotes" in url:
+        # Select a random quote from response
+        quote = response[randint(0, len(response))]
+
+        # Return string of quote
+        return f"{quote['text']} - {quote['author']}"
+    else:
+        # Create a list of 50 random words from response
+        word_selection = []
+        for i in range(50):
+            word_selection.append(
+                str(response[randint(0, len(response))])[2:-1])
+
+        # Return string of word selection
+        return " ".join(word_selection)
+
+
 def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
-    # Update delay so that program waits on user input
-    window.nodelay(False)
 
     # Set cursor to invisible
     curses.curs_set(0)
 
     while True:
+        # Update delay so that program waits on user input
+        window.nodelay(False)
+
         menu_text = ["Welcome to Keebz-Typerz, a typing game to test your skills",
                      "Please select an option from the menu:",
                      "1. Test from file",
@@ -323,75 +356,60 @@ def menu(window, x, y):
                 colour = curses.color_pair(4)  # Blue option text
             window.addstr(y + i, x, menu_text[i], colour)
         window.refresh()
+
         key = window.getch()
 
         match key:
             case 49:  # If user presses 1
-                # Tell user to include text-file in app directory
-                quick_print(
-                    window, x, y, "Please copy a '.txt' file to the app directory to load text")
-
-                # Draw option to return to menu
+                # Set input delay to True so program waits for input
+                window.nodelay(True)
+                #
+                # quick_print(
+                #     window, x, y, "Please copy a '.txt' file to the app directory to load text")
+                window.erase()
+                # Draw option to return to menu and ell user to include text-file in app directory
                 window.addstr(
                     0, 0, "Press 'enter' to return to menu", curses.color_pair(2))
+                window.addstr(
+                    y, x, "Please copy a '.txt' file to the app directory to load text")
                 window.refresh()
                 # Attempt to load the text file
-                file_text = load_input_file(window)
+                while True:
+                    key = window.getch()
+
+                    file_text = load_input_file()
+
+                    if key == 10 or key == 13:
+                        file_text = 0
+                        break
+                    elif (type(file_text) == str):
+                        break
 
                 # If the file was correctly loaded, return the contents
                 if file_text != 0:
                     return file_text
             case 50:  # If user presses 2
-                # Loading page
-                quick_print(
-                    window, x, y, "Loading words from MIT")
-                # Request a wordlist from MIT API
-                try:
-                    # Try make request and generate list of all words from the response
-                    response = get(
-                        "https://www.mit.edu/~ecprice/wordlist.10000", timeout=2).content.splitlines()
-                except:
-                    # Tell user why request failed
-                    quick_print(
-                        window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
-                    sleep(2)
+                response = load_api("https://www.mit.edu/~ecprice/wordlist.10000",
+                                    "Loading words from MIT", "Unable to load random words, sorry!", window, x, y)
+                if response != 0:
+                    return response
+                else:
                     continue
 
-                # Create a list of 50 random words from response
-                word_selection = []
-                for i in range(50):
-                    word_selection.append(
-                        str(response[randint(0, len(response))])[2:-1])
-
-                # Return string of word selection
-                return " ".join(word_selection)
             case 51:  # If user presses 3
-                # Loading page
-                quick_print(
-                    window, x, y, "Loading quotes from Type.fit API")
-                # Request a wordlist from Quotes API
-                try:
-                    # Try make request and generate a json from response
-                    response = get(
-                        "https://type.fit/api/quotes", timeout=2).json()
-                except:
-                    # Tell user why request failed
-                    quick_print(
-                        window, x, y, "Unable to load quotes, sorry!", curses.color_pair(3))
-                    sleep(2)
+
+                response = load_api("https://type.fit/api/quotes", "Loading quotes from Type.fit API",
+                                    "Unable to load quotes, sorry!", window, x, y)
+                if response != 0:
+                    return response
+                else:
                     continue
-
-                # Select a random quote from response
-                quote = response[randint(0, len(response))]
-
-                # Return string of quote
-                return f"{quote['text']} - {quote['author']}"
             case 52:  # If user presses 4
                 # Load high scores file
                 scores = load_high_score()
                 window.erase()
                 window.addstr(
-                    0, 0, "Press 'esc' to exit, 'enter' to return to menu", curses.color_pair(2))
+                    0, 0, "Press any key to return to menu", curses.color_pair(2))
                 # Print scores to screen
                 draw(window, scores, x, y)
                 window.refresh()

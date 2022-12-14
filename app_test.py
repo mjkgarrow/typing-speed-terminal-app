@@ -9,72 +9,100 @@ import curses
 # def test_main(window):
 #     pass
 
-
-# Test save_score_to_file is reading and writing to file correctly
-@patch("builtins.open", new_callable=mock_open, read_data="Matt 1: 77wpm, 100.0% accuracy, 84.52% consistency, Easy mode")
-def test_save_score_to_file(mock_file):
-    assert app.save_score_to_file('Matt 3', 90, 100.0, 'Easy mode', 84.52) == [
-        'Matt 3: 90wpm, 100.0% accuracy, 84.52% consistency, Easy mode',
-        'Matt 1: 77wpm, 100.0% accuracy, 84.52% consistency, Easy mode']
-
-
-# Test load_high_score is correctly reading a file
-@patch("builtins.open", new_callable=mock_open, read_data="Matt 1: 77wpm, 100.0% accuracy, 84.52% consistency, Easy mode")
-def test_load_file_read_file(mock_file):
-    with mock.patch('os.listdir') as mocked_listdir:
-        mocked_listdir.return_value = [mock_file]
-        assert app.load_high_score() == [
-            "Matt 1: 77wpm, 100.0% accuracy, 84.52% consistency, Easy mode"]
+class Test_save_score_to_file(unittest.TestCase):
+    # Test save_score_to_file is reading and writing to file correctly
+    @patch("builtins.open", new_callable=mock_open, read_data="Matt 1: 77wpm, Easy mode, 100.0% accuracy, 84.52% consistency")
+    def test_file_read_write(self, mock_file):
+        result = app.save_score_to_file(
+            'Matt 2', 90, 100.0, 'Easy mode', 84.52)
+        self.assertEqual(result, [
+            'Matt 2: 90wpm, Easy mode, 100.0% accuracy, 84.52% consistency',
+            'Matt 1: 77wpm, Easy mode, 100.0% accuracy, 84.52% consistency'])
 
 
-# Test load_high_score is correctly responding to an empty file
-@patch("builtins.open", new_callable=mock_open, read_data="")
-def test_load_file_empty_file(mock_file):
-    with mock.patch('os.listdir') as mocked_listdir:
-        mocked_listdir.return_value = [mock_file]
-        assert app.load_high_score() == ["No high scores."]
+class Test_load_high_scores(unittest.TestCase):
+    # Test load_high_score is correctly reading the file
+    @patch("builtins.open", new_callable=mock_open, read_data="Matt 1: 77wpm, 100.0% accuracy, 84.52% consistency, Easy mode\nMatt 2: 90wpm, Easy mode, 100.0% accuracy, 84.52% consistency")
+    def test_file_read(self, mock_file):
+        with mock.patch('os.listdir') as mocked_listdir:
+            mocked_listdir.return_value = [mock_file]
+            result = app.load_high_score()
+            self.assertEqual(result, [
+                "Matt 1: 77wpm, 100.0% accuracy, 84.52% consistency, Easy mode",
+                "Matt 2: 90wpm, Easy mode, 100.0% accuracy, 84.52% consistency"])
+
+    # Test load_high_score is correctly responding to an empty file
+    @patch("builtins.open", new_callable=mock_open, read_data="")
+    def test_empty_file(self, mock_file):
+        with mock.patch('os.listdir') as mocked_listdir:
+            mocked_listdir.return_value = [mock_file]
+            result = app.load_high_score()
+            self.assertEqual(result, ["No high scores."])
 
 
-# Test consistency function with no deviation
-def test_measure_consistency():
-    consistency = app.measure_consistency([65, 65, 65])
-    assert consistency == 100
+class Test_consistency(unittest.TestCase):
+    # Test consistency function with no deviation
+    def test_no_std_deviation(self):
+        result = app.measure_consistency([65, 65, 65])
+        self.assertEqual(result, 100.0)
+
+    # Test consistency function with list of 0s
+    def test_zero(self):
+        result = app.measure_consistency([0, 0, 0])
+        self.assertEqual(result, 0)
+
+    # Test consistency function with only 1 input
+    def test_one_input(self):
+        result = app.measure_consistency([100])
+        self.assertEqual(result, 100.0)
+
+    # Test consistency function with empty list
+    def test_empty_list(self):
+        result = app.measure_consistency([])
+        self.assertEqual(result, 0)
 
 
-# Test consistency function with 0s
-def test_measure_consistency_zero():
-    consistency = app.measure_consistency([0, 0, 0])
-    assert consistency == 0
+class Test_calculate_wpm(unittest.TestCase):
+    # Test wpm calculation with correct user input
+    def test_wpm(self):
+        prompt = "This is a test case"
+        user_typed = "This is a test case"
+        time_in_seconds = 60
+        result = app.calculate_wpm(
+            prompt, user_typed, time_in_seconds)
+        self.assertEqual(result, (3, 3, 100.0))
+
+    # Test wpm calculation with correct some input errors
+    def test_error_input(self):
+        prompt = "This is a test case"
+        user_typed = "This is a blur case"
+        time_in_seconds = 60
+        result = app.calculate_wpm(
+            prompt, user_typed, time_in_seconds)
+        self.assertEqual(result, (3, 0, 78.9))
+
+    # Test wpm calculation with correct some no input
+    def test_no_input(self):
+        prompt = "This is a test case"
+        user_typed = ""
+        time_in_seconds = 60
+        result = app.calculate_wpm(
+            prompt, user_typed, time_in_seconds)
+        self.assertEqual(result, (0, 0, 0))
 
 
-# Test consistency function with only 1 input
-def test_measure_consistency_1input():
-    consistency = app.measure_consistency([100])
-    assert consistency == 100.0
+# class Test_load_input_file(unittest.TestCase):
+#     @patch("builtins.open", new_callable=mock_open, read_data="This is a typing prompt")
+#     def test_enter_key(self, mock_file):
+#         # window = curses.initscr()
+#         result = app.load_input_file(self)
+#         self.assertEqual(result, ["This is a typing prompt"])
+
+    # def test_enter_key(self):
+    #     window = curses.initscr()
+    #     result = app.load_input_file(self, window)
+    #     self.assertEqual(result)
 
 
-# Test wpm calculation with correct user input
-def test_calculate_wpm():
-    prompt = "This is a test case"
-    user_typed = "This is a test case"
-    time_in_seconds = 60
-    assert app.calculate_wpm(
-        prompt, user_typed, time_in_seconds) == (3, 3, 100.0)
-
-
-# Test wpm calculation with correct some incorrect input
-def test_calculate_wpm_incorrect():
-    prompt = "This is a test case"
-    user_typed = "This is a blur case"
-    time_in_seconds = 60
-    assert app.calculate_wpm(
-        prompt, user_typed, time_in_seconds) == (3, 0, 78.9)
-
-
-# Test wpm calculation with correct some no input
-def test_calculate_wpm_no_input():
-    prompt = "This is a test case"
-    user_typed = ""
-    time_in_seconds = 60
-    assert app.calculate_wpm(
-        prompt, user_typed, time_in_seconds) == (0, 0, 0)
+if __name__ == "__main__":
+    unittest.main()
