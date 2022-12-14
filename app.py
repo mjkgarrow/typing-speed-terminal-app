@@ -7,12 +7,9 @@ from random import randint
 from numpy import mean, std
 
 
-# Create requirements
-# pip freeze > requirements.txt
-
-
 def check_valid_terminal():
     ''' Checks if valid terminal size'''
+
     window_size = [get_terminal_size()[0], get_terminal_size()[1]]
     if window_size[0] <= 75 or window_size[1] <= 15:
         return False
@@ -21,6 +18,7 @@ def check_valid_terminal():
 
 def get_window_sizes():
     ''' Find the size of the terminal window and calculate maximum string width and starting positions'''
+
     # Get terminal window size [width, height]
     window_size = [get_terminal_size()[0], get_terminal_size()[1]]
 
@@ -35,6 +33,7 @@ def get_window_sizes():
 
 def shutdown(window, x, y):
     ''' Displays a goodbye message and quits the program'''
+
     quick_print(window, x, y, "Goodbye", curses.color_pair(2))
     sleep(1)
     quit()
@@ -42,7 +41,7 @@ def shutdown(window, x, y):
 
 def load_input_file():
     '''Loads prompt txt file from within app directory, returns a string of file contents'''
-    # Search through directory to find a file
+
     for file in listdir(getcwd()):
         if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
             with open(file, 'r') as f:
@@ -54,6 +53,7 @@ def load_input_file():
 
 def load_high_score():
     ''' Loads scores file and returns list of scores'''
+
     file_list = listdir(getcwd())
     if "scores.txt" in file_list:
         with open("scores.txt", 'r') as f:
@@ -66,6 +66,7 @@ def load_high_score():
 
 def quick_print(window, x, y, text, colour=None):
     ''' Clears screen and types supplied text with colour option'''
+
     window.erase()
     if colour:
         window.addstr(
@@ -77,7 +78,8 @@ def quick_print(window, x, y, text, colour=None):
 
 
 def draw(window, text, text_start_x, text_start_y):
-    '''Draws list of text to the screen, line by line'''
+    '''Draws list of text to the screen, line by line, but doesn't refresh screen'''
+
     for i in range(len(text)):
         window.addstr(text_start_y + i, text_start_x,
                       text[i])
@@ -85,8 +87,9 @@ def draw(window, text, text_start_x, text_start_y):
 
 # Tested in pytest
 def measure_consistency(wpm_values):
-    ''' Calculates typing consistency based on the variation of wpm from 0 - 100%
-        Algorithm from https://monkeytype.com/about'''
+    ''' Calculates typing consistency based on the standard deviation of wpm from 0 - 100%'''
+    ''' Algorithm inspired by https://monkeytype.com/about'''
+
     # If provided an empty wpm_values list, return 0
     if len(wpm_values) == 0:
         return round(0, 2)
@@ -94,6 +97,7 @@ def measure_consistency(wpm_values):
     # Calculate the mean of the wpm values
     wpm_mean = mean(wpm_values)
 
+    # Check if mean is 0, which will cause a divide-by-zero error later
     if wpm_mean == 0:
         return round(0, 2)
 
@@ -115,6 +119,9 @@ def measure_consistency(wpm_values):
 # Tested in pytest
 def calculate_wpm(prompt, user_typed, time_in_seconds):
     ''' Calculates words-per-minute, accuracy, and consistency'''
+    ''' Words-per-minute calculated by (total characters/5)/60 seconds'''
+    ''' Making a word 5 letters long standardises the statistics'''
+
     # The function may be called with a user input of 0 characters, so return 0 instead of running the algorithm
     if len(user_typed) == 0:
         return (0, 0, 0)
@@ -144,6 +151,7 @@ def calculate_wpm(prompt, user_typed, time_in_seconds):
 
 def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, text_start_y):
     ''' Draws prompt and user typed input to screen and displays accuracy colour coding '''
+
     # Draw typing prompt to screen
     draw(window, typing_prompt, text_start_x, text_start_y)
 
@@ -167,6 +175,7 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
 # Tested in pytest
 def sort_scores(scores):
     ''' Sorts scores in descending order by wpm/difficulty/accuracy'''
+
     # Loop over scores to separate values so they can be sorted
     score_list = []
     for score in scores:
@@ -187,6 +196,7 @@ def sort_scores(scores):
 # Tested in pytest
 def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
     ''' Opens or creates a file, sorts the scores by wpm/accuracy/difficulty, saves scores to file'''
+
     # Check if scores file already exists
     if "scores.txt" in listdir(getcwd()):
         # Open file and read scores into a variable
@@ -217,6 +227,7 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
 # Tested in pytest
 def username_unused(username):
     ''' Checks if submitted username has already been used'''
+
     if username == "":
         return False
     if "scores.txt" in listdir(getcwd()):
@@ -300,7 +311,8 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
 
 # Tested in pytest
 def load_api(url):
-    # Request responses from API
+    ''' Makes an API request to supplied url and creates a typing prompt from the response'''
+
     try:
         # Try make request and generate list of all words from the response
         if "quotes" in url:
@@ -309,7 +321,9 @@ def load_api(url):
             response = get("https://www.mit.edu/~ecprice/wordlist.10000",
                            timeout=2).content.splitlines()
     except:
+        # Return if an error is generated
         return 0
+
     if "quotes" in url:
         # Select a random quote from response
         quote = response[randint(0, len(response))]
@@ -328,6 +342,15 @@ def load_api(url):
 def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
 
+    # List of menu options
+    menu_text = ["Welcome to Keebz-Typerz, a typing game to test your skills",
+                 "Please select an option from the menu:",
+                 "1. Test from file",
+                 "2. Test random words",
+                 "3. Test a quote",
+                 "4. See high scores",
+                 "5. Quit"]
+
     # Set cursor to invisible
     curses.curs_set(0)
 
@@ -335,14 +358,6 @@ def menu(window, x, y):
     window.nodelay(False)
 
     while True:
-
-        menu_text = ["Welcome to Keebz-Typerz, a typing game to test your skills",
-                     "Please select an option from the menu:",
-                     "1. Test from file",
-                     "2. Test random words",
-                     "3. Test a quote",
-                     "4. See high scores",
-                     "5. Quit"]
 
         window.erase()
 
@@ -438,7 +453,8 @@ def menu(window, x, y):
 
 
 def main(window):
-    ''' Main app function'''
+    ''' Main app function, a typing speed game'''
+
     # Calculate window sizes to start game
     window_sizes = get_window_sizes()
     max_width = window_sizes[0]
@@ -472,11 +488,11 @@ def main(window):
     # Variable to store wpm each time a user types something, used by the consistency function
     wpm_values = []
 
-    # Set cursor visibility so user can see where they are typing
-    curses.curs_set(1)
-
     # Loop to get user input
     while True:
+
+        # Set cursor visibility so user can see where they are typing
+        curses.curs_set(1)
 
         # Update delay so that program isn't waiting on user input
         window.nodelay(True)
