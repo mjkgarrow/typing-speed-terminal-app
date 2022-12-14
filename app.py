@@ -47,6 +47,8 @@ def load_input_file():
         if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
             with open(file, 'r') as f:
                 lines = f.read().splitlines()
+                if len(lines) == 0:
+                    return 0
                 return " ".join(lines)
 
 
@@ -361,11 +363,9 @@ def menu(window, x, y):
             case 49:  # If user presses 1
                 # Set input delay to True so program waits for input
                 window.nodelay(True)
-                #
-                # quick_print(
-                #     window, x, y, "Please copy a '.txt' file to the app directory to load text")
+                # Clear screen
                 window.erase()
-                # Draw option to return to menu and ell user to include text-file in app directory
+                # Draw option to return to menu and tell user how to input a text-file
                 window.addstr(
                     0, 0, "Press 'enter' to return to menu", curses.color_pair(2))
                 window.addstr(
@@ -377,15 +377,17 @@ def menu(window, x, y):
 
                     file_text = load_input_file()
 
+                    # If user presses 'enter', break loop
                     if key == 10 or key == 13:
-                        file_text = 0
                         break
+                    # If file is empty
+                    if file_text == 0:
+                        # Prompt the user with an error
+                        quick_print(
+                            window, x, y, "Text file is empty! Press 'enter' to return to menu", curses.color_pair(3))
+                    # If the file was correctly loaded, return the contents
                     elif (type(file_text) == str):
-                        break
-
-                # If the file was correctly loaded, return the contents
-                if file_text != 0:
-                    return file_text
+                        return file_text
             case 50:  # If user presses 2
                 # Loading page
                 quick_print(
