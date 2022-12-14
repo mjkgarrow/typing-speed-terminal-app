@@ -1,13 +1,8 @@
 import app
-import unittest.mock
-from unittest.mock import patch, mock_open
-from unittest import mock
 import unittest
-import requests
+from unittest import mock
+from unittest.mock import patch, mock_open
 
-
-# def test_main(window):
-#     pass
 
 class Test_save_score_to_file(unittest.TestCase):
     # Test save_score_to_file is reading and writing to file correctly
@@ -133,6 +128,23 @@ class Test_load_api(unittest.TestCase):
     def test_quote_response(self):
         result = app.load_api("https://type.fit/api/quotes")
         self.assertEqual(type(result), type("result"))
+
+
+class Test_username_unused(unittest.TestCase):
+    @patch("builtins.open", new_callable=mock_open, read_data="Matt: 77wpm, Easy mode, 100.0% accuracy, 84.52% consistency")
+    def test_used(self, mock_file):
+        username = 'Matt'
+        self.assertEqual(app.username_unused(username), False)
+
+    @patch("builtins.open", new_callable=mock_open, read_data="Dave: 77wpm, Easy mode, 100.0% accuracy, 84.52% consistency")
+    def test_unused(self, mock_file):
+        username = 'Fred'
+        self.assertEqual(app.username_unused(username), True)
+
+    @patch("builtins.open", new_callable=mock_open, read_data="Dave: 77wpm, Easy mode, 100.0% accuracy, 84.52% consistency")
+    def test_empty(self, mock_file):
+        username = ''
+        self.assertEqual(app.username_unused(username), False)
 
 
 if __name__ == "__main__":

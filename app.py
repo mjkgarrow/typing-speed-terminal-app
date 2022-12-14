@@ -81,6 +81,7 @@ def draw(window, text, text_start_x, text_start_y):
                       text[i])
 
 
+# Tested in pytest
 def measure_consistency(wpm_values):
     ''' Calculates typing consistency based on the variation of wpm from 0 - 100%
         Algorithm from https://monkeytype.com/about'''
@@ -109,6 +110,7 @@ def measure_consistency(wpm_values):
     return round(consistency, 2)
 
 
+# Tested in pytest
 def calculate_wpm(prompt, user_typed, time_in_seconds):
     ''' Calculates words-per-minute, accuracy, and consistency'''
     # The function may be called with a user input of 0 characters, so return 0 instead of running the algorithm
@@ -160,6 +162,7 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
                               char, wrapped_user_typed[line][char], colour)
 
 
+# Tested in pytest
 def sort_scores(scores):
     ''' Sorts scores in descending order by wpm/difficulty/accuracy'''
     # Loop over scores to separate values so they can be sorted
@@ -179,6 +182,7 @@ def sort_scores(scores):
     return score_list
 
 
+# Tested in pytest
 def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
     ''' Opens or creates a file, sorts the scores by wpm/accuracy/difficulty, saves scores to file'''
     # Check if scores file already exists
@@ -208,6 +212,7 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
         return [f"{username}: {wpm}wpm, {difficulty}, {accuracy}% accuracy, {consistency}% consistency"]
 
 
+# Tested in pytest
 def username_unused(username):
     ''' Checks if submitted username has already been used'''
     if username == "":
@@ -274,9 +279,9 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
                 username = username[:-1]
         elif key == 10 or key == 13:  # Check if enter key
             # Check username isn't used
-            if username_unused(username):
+            if username_unused(username.strip()):
                 # Save score to file
-                save_score_to_file(username, wpm, accuracy,
+                save_score_to_file(username.strip(), wpm, accuracy,
                                    difficulty, consistency)
                 return 1
             else:
@@ -291,6 +296,7 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
             return 1
 
 
+# Tested in pytest
 def load_api(url):
     # Request responses from API
     try:
