@@ -291,11 +291,8 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
             return 1
 
 
-def load_api(url, waiting_message, response_message, window, x, y):
-    # Loading page
-    quick_print(
-        window, x, y, waiting_message)
-    # Request a wordlist from MIT API
+def load_api(url):
+    # Request responses from API
     try:
         # Try make request and generate list of all words from the response
         if "quotes" in url:
@@ -304,10 +301,6 @@ def load_api(url, waiting_message, response_message, window, x, y):
             response = get("https://www.mit.edu/~ecprice/wordlist.10000",
                            timeout=2).content.splitlines()
     except:
-        # Tell user why request failed
-        quick_print(
-            window, x, y, response_message, curses.color_pair(3))
-        sleep(2)
         return 0
     if "quotes" in url:
         # Select a random quote from response
@@ -317,10 +310,8 @@ def load_api(url, waiting_message, response_message, window, x, y):
         return f"{quote['text']} - {quote['author']}"
     else:
         # Create a list of 50 random words from response
-        word_selection = []
-        for i in range(50):
-            word_selection.append(
-                str(response[randint(0, len(response))])[2:-1])
+        word_selection = [response[randint(0, len(response))].decode(
+            encoding='UTF-8') for _ in range(50)]
 
         # Return string of word selection
         return " ".join(word_selection)
@@ -332,9 +323,10 @@ def menu(window, x, y):
     # Set cursor to invisible
     curses.curs_set(0)
 
+    # Update delay so that program waits on user input
+    window.nodelay(False)
+
     while True:
-        # Update delay so that program waits on user input
-        window.nodelay(False)
 
         menu_text = ["Welcome to Keebz-Typerz, a typing game to test your skills",
                      "Please select an option from the menu:",
@@ -389,20 +381,38 @@ def menu(window, x, y):
                 if file_text != 0:
                     return file_text
             case 50:  # If user presses 2
-                response = load_api("https://www.mit.edu/~ecprice/wordlist.10000",
-                                    "Loading words from MIT", "Unable to load random words, sorry!", window, x, y)
+                # Loading page
+                quick_print(
+                    window, x, y, "Loading words from MIT")
+
+                # Make API call
+                response = load_api(
+                    "https://www.mit.edu/~ecprice/wordlist.10000")
+
+                # Check if response is correct
                 if response != 0:
                     return response
                 else:
+                    # Tell user why request failed
+                    quick_print(
+                        window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
+                    sleep(2)
                     continue
-
             case 51:  # If user presses 3
+                # Display loading screen
+                quick_print(
+                    window, x, y, "Loading words from MIT")
 
-                response = load_api("https://type.fit/api/quotes", "Loading quotes from Type.fit API",
-                                    "Unable to load quotes, sorry!", window, x, y)
+                # Make API call
+                response = load_api("https://type.fit/api/quotes")
+                # Check if response is correct
                 if response != 0:
                     return response
                 else:
+                    # Tell user why request failed
+                    quick_print(
+                        window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
+                    sleep(2)
                     continue
             case 52:  # If user presses 4
                 # Load high scores file
@@ -454,14 +464,14 @@ def main(window):
     # Variable to store wpm each time a user types something, used by the consistency function
     wpm_values = []
 
-    # Update delay so that program isn't waiting on user input
-    window.nodelay(True)
-
     # Set cursor visibility so user can see where they are typing
     curses.curs_set(1)
 
     # Loop to get user input
     while True:
+
+        # Update delay so that program isn't waiting on user input
+        window.nodelay(True)
 
         # Calculate window sizes in while loop so terminal window is adaptive
         window_sizes = get_window_sizes()
@@ -488,6 +498,7 @@ def main(window):
             finished_typing = False
             # Return to menu
             typing_prompt = menu(window, text_start_x, text_start_y)
+            continue
         elif 32 <= key < 126:  # Check if key is alphanumeric/punctuation, add to user input
             # Check if first input, start typing timer
             if len(user_typed_string) == 0:
@@ -496,11 +507,13 @@ def main(window):
             user_typed_string += chr(key)
             typed = True
         elif key == 127:  # Check if key is backspace, remove from user input
+            # Hard mode prevents user from using backspace
             if hard_mode:
                 continue
             if len(user_typed_string) > 0:
                 user_typed_string = user_typed_string[:-1]
 
+        # Wrap typing prompt so it fits in terminal window
         typing_prompt_wrapped = wrap(
             typing_prompt, max_width, drop_whitespace=False)
 
@@ -509,10 +522,8 @@ def main(window):
         user_typed_wrapped = [user_typed_string[sum(
             sub_numbers[:i]):sum(sub_numbers[:i+1])] for i in range(len(sub_numbers))]
 
-        # Algorithm to see if user has finished typing
-        prompt_length = len(''.join(typing_prompt_wrapped))
-        user_typed_length = len(''.join(user_typed_wrapped))
-        if prompt_length == user_typed_length:
+        # See if user has typed the full length of the prompt
+        if len(''.join(user_typed_wrapped)) == len(''.join(typing_prompt_wrapped)):
             finished_typing = True
 
         # Clear screen so new text can be drawn

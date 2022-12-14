@@ -3,7 +3,7 @@ import unittest.mock
 from unittest.mock import patch, mock_open
 from unittest import mock
 import unittest
-import curses
+import requests
 
 
 # def test_main(window):
@@ -81,7 +81,7 @@ class Test_calculate_wpm(unittest.TestCase):
             prompt, user_typed, time_in_seconds)
         self.assertEqual(result, (3, 0, 78.9))
 
-    # Test wpm calculation with correct some no input
+    # Test wpm calculation with correct no input
     def test_no_input(self):
         prompt = "This is a test case"
         user_typed = ""
@@ -91,17 +91,48 @@ class Test_calculate_wpm(unittest.TestCase):
         self.assertEqual(result, (0, 0, 0))
 
 
-# class Test_load_input_file(unittest.TestCase):
-#     @patch("builtins.open", new_callable=mock_open, read_data="This is a typing prompt")
-#     def test_enter_key(self, mock_file):
-#         # window = curses.initscr()
-#         result = app.load_input_file(self)
-#         self.assertEqual(result, ["This is a typing prompt"])
+class Test_sort_scores(unittest.TestCase):
+    # Test order function
+    def test_clean_input(self):
+        scores = ["Matt 2: 0wpm, Easy mode, 4.3% accuracy, 0% consistency",
+                  "Matt 3: 72wpm, Easy mode, 100.0% accuracy, 0% consistency",
+                  "Matt 1: 65wpm, Easy mode, 100.0% accuracy, 78.18% consistency"]
+        result = app.sort_scores(scores)
+        self.assertEqual(result, ['Matt 3: 72wpm, Easy mode, 100.0% accuracy, 0% consistency',
+                         'Matt 1: 65wpm, Easy mode, 100.0% accuracy, 78.18% consistency', 'Matt 2: 0wpm, Easy mode, 4.3% accuracy, 0% consistency'])
 
-    # def test_enter_key(self):
-    #     window = curses.initscr()
-    #     result = app.load_input_file(self, window)
-    #     self.assertEqual(result)
+    # Duplicate scores don't need to be sorted, they remain in the order they were submitted
+    def test_duplicate_input(self):
+        scores = ["Matt 1: 72wpm, Easy mode, 100.0% accuracy, 0% consistency",
+                  "Matt 2: 72wpm, Easy mode, 100.0% accuracy, 0% consistency",
+                  "Matt 3: 72wpm, Easy mode, 100.0% accuracy, 0% consistency"]
+        result = app.sort_scores(scores)
+        self.assertEqual(result, ["Matt 1: 72wpm, Easy mode, 100.0% accuracy, 0% consistency",
+                                  "Matt 2: 72wpm, Easy mode, 100.0% accuracy, 0% consistency",
+                                  "Matt 3: 72wpm, Easy mode, 100.0% accuracy, 0% consistency"])
+
+    # If no scores provided, return an empty list and don't crash
+    def test_no_input(self):
+        scores = []
+        result = app.sort_scores(scores)
+        self.assertEqual(result, [])
+
+
+class Test_load_api(unittest.TestCase):
+    # Tests API call to random words returns 50 words
+    def test_random_words_count(self):
+        result = app.load_api("https://www.mit.edu/~ecprice/wordlist.10000")
+        self.assertEqual(len(result.split()), 50)
+
+    # Tests API call to random words returns a str
+    def test_random_words_type(self):
+        result = app.load_api("https://www.mit.edu/~ecprice/wordlist.10000")
+        self.assertEqual(type(result), type("result"))
+
+    # Test API call to quote returns a str
+    def test_quote_response(self):
+        result = app.load_api("https://type.fit/api/quotes")
+        self.assertEqual(type(result), type("result"))
 
 
 if __name__ == "__main__":
