@@ -1,7 +1,5 @@
 #! /bin/bash
 
-python3 ./app.py
-
 if ! [[ -x "$(command -v python)" ]]
 then
   echo 'Error: 
@@ -9,3 +7,5 @@ then
     To install Python, check out https://installpython3.com/' >&2
   exit 1
 fi
+
+python3 ./app.py

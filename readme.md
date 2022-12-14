@@ -14,11 +14,15 @@ This Python CLI program tests the user's typing speed with prompts from the user
 
 ## Usage
 
-Run:
+1. Install dependencies
 ```
-script.sh
+pip install -r requirements.txt
 ```
 
+2. Run bash script to play game
+```
+bash script.sh
+```
 
 ---
 
@@ -36,3 +40,45 @@ This program uses the following Python packages:
 
 ---
 
+## Features
+
+### Choose from 3 types of games:
+- Load a typing prompt from file
+- Test your typing with random words
+- Test your typing with a famous quote
+
+### Review previous scores, with the current leader at the top
+The app will search for a previous scores text file.
+
+### Save your score to a file
+When you save your score it will be automatically ordered into the previous scores, ordered by wpm/difficulty/accuracy
+
+### Display live typing results
+Statistics include:
+- ***Instant text response***  
+User typed characters will appear either green = correct, or red = incorrect
+- ***Time remaining***  
+User gets 30 seconds. This makes the game fun, 60 seconds was too long and was tiring to play.
+
+- ***Words-per-minute (wpm)***  
+Calculated with the formula below. The industry standard is for 5 characters to equal a 'word':
+```
+wpm = (total-typed-characters / 5) / 60 seconds
+```
+- ***Accuracy***  
+The percentage of correct characters.
+
+- ***Consistency***  
+The coefficient of variation of the wpm scaled 0 - 100% (higher is better). The formula was inspired by [Monkey Type](https://monkeytype.com/about):
+```
+wpm_list = [list of all wpm result from each time the user presses a key]
+wpm_mean = the average of the wpm_list
+wpm_standard_deviation = the standard deviation of the wpm_list
+wpm_coefficient = 100 - ((wpm_standard_deviation / wpm_mean) * 100) 
+```
+
+### Choose difficulty
+
+User can select between 'Easy mode', which is just regular play, or 'Hard mode', which disables the delete/backspace key.
+
+Choosing hard mode also means you will be promoted higher in the final scores.
