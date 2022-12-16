@@ -66,40 +66,59 @@ def check_esc(key):
 def get_input_file_location(window, x, y):
     # Set input delay to True so program doesn't pause for input
     window.nodelay(True)
-    # Clear screen
-    window.erase()
-    # Draw option to return to menu and tell user how to input a text-file
-    window.addstr(
-        0, 0, "Press 'enter' to return to menu", curses.color_pair(2))
+
+    # Variable to store user input file path
+    file_path = ""
+
     # Attempt to load the text file
     while True:
 
+        # Get user input
         key = window.getch()
-        file_path = ""
+
+        # Clear screen
+        window.erase()
+
+        # If user presses an ascii, add to file_path
+        if check_ascii_input(key):
+            file_path += chr(key)
+        # If user presses 'esc', return to menu
+        elif check_esc(key):
+            return None
+        # If user presses 'backspace' remove from file_path
+        elif check_backspace(key):
+            file_path = file_path[:-1]
+        # If user presses 'enter', check file path is valid
+        elif check_enter_input(key):
+            if path.isfile(file_path):
+                return file_path
+            else:
+                quick_print(
+                    window, x, y, "Please provide a valid file path...", curses.color_pair(3))
+                sleep(1)
+                window.erase()
+
+        # Draw option to return to menu and tell user how to input a text-file
         window.addstr(
-            y, x, f"Provide location of text file: {file_path}")
+            0, 0, "Press 'esc' to return to menu", curses.color_pair(2))
+
+        # Draw prompt for file path
+        window.addstr(
+            y, x, f"Provide location of text (txt) file, then press enter: {file_path}")
+
+        # Refresh page with text
         window.refresh()
 
-        # If user presses 'enter', break loop
-        if check_enter_input(key):
-            if path.isfile(file_path):
-                pass
-            else:
-                return None
-        elif check_ascii_input(key):
-            file_path += key
 
-
-def load_input_file():
+def load_input_file(file_name):
     '''Loads prompt txt file from within app directory, returns a string of file contents'''
 
-    for file in listdir(getcwd()):
-        if file.endswith(".txt") and (file != "requirements.txt" and file != "scores.txt"):
-            with open(file, 'r') as f:
-                lines = f.read().splitlines()
-                if len(lines) == 0:
-                    return 0
-                return " ".join(lines)
+    with open(file_name, 'r') as f:
+        lines = f.read().splitlines()
+        if len(lines) == 0:
+            return None
+        text = " ".join(lines).split()[:50]
+        return " ".join(text)
 
 
 def load_high_score():
@@ -339,8 +358,7 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
             username += chr(key)
         elif check_backspace(key):  # Check if key is backspace
             # Remove from username
-            if len(username) > 0:
-                username = username[:-1]
+            username = username[:-1]
         elif check_enter_input(key):  # Check if enter key
             # Check username isn't used
             if username_unused(username.strip()):
@@ -425,95 +443,135 @@ def menu(window, x, y):
 
         key = window.getch()
 
-        match key:
-            case 49:  # If user presses 1
-                file_name = get_input_file_location(window, x, y)
-                if file_name == None:
-                    continue
-                else:
-                    file_text = load_input_file(file_name)
+        if key == 49:  # If user presses 1
+            # Get a file path from user
+            file_path = get_input_file_location(window, x, y)
 
-                if file_text == None:
-                    quick_print(
-                        window, x, y, "Text file is empty! Returning to menu", curses.color_pair(3))
-                    sleep(1)
-                else:
-                    return file_text
+            # Check file path is
+            if file_path == None:
+                continue
+            else:
+                file_text = load_input_file(file_path)
 
-                # Set input delay to True so program waits for input
-                window.nodelay(True)
-                # Clear screen
-                window.erase()
-                # Draw option to return to menu and tell user how to input a text-file
-                window.addstr(
-                    0, 0, "Press 'enter' to return to menu", curses.color_pair(2))
-                window.addstr(
-                    y, x, "Please copy a '.txt' file to the app directory to load text")
-                window.refresh()
-                # Attempt to load the text file
-                while True:
-                    key = window.getch()
-
-                    file_text = load_input_file()
-
-                    # If user presses 'enter', break loop
-                    if check_enter_input(key):
-                        break
-                    # If file is empty
-                    if file_text == 0:
-                        # Prompt the user with an error
-                        quick_print(
-                            window, x, y, "Text file is empty! Press 'enter' to return to menu", curses.color_pair(3))
-                    # If the file was correctly loaded, return the contents
-                    elif (type(file_text) == str):
-                        return file_text
-            case 50:  # If user presses 2
-                # Loading page
+            if file_text == None:
                 quick_print(
-                    window, x, y, "Loading words from MIT")
+                    window, x, y, "Text file is empty! Returning to menu...", curses.color_pair(3))
+                sleep(1)
+            else:
+                return file_text
+        elif key == 50:  # If user presses 2
+            # Loading page
+            quick_print(
+                window, x, y, "Loading words from MIT")
 
-                # Make API call
-                response = load_api(
-                    "https://www.mit.edu/~ecprice/wordlist.10000")
+            # Make API call
+            response = load_api(
+                "https://www.mit.edu/~ecprice/wordlist.10000")
 
-                # Check if response is correct
-                if response != 0:
-                    return response
-                else:
-                    # Tell user why request failed
-                    quick_print(
-                        window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
-                    sleep(2)
-                    continue
-            case 51:  # If user presses 3
-                # Display loading screen
+            # Check if response is correct
+            if response != 0:
+                return response
+            else:
+                # Tell user why request failed
                 quick_print(
-                    window, x, y, "Loading words from MIT")
+                    window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
+                sleep(2)
+                continue
+        elif key == 51:  # If user presses 3
+            # Display loading screen
+            quick_print(
+                window, x, y, "Loading words from MIT")
 
-                # Make API call
-                response = load_api("https://type.fit/api/quotes")
-                # Check if response is correct
-                if response != 0:
-                    return response
-                else:
-                    # Tell user why request failed
-                    quick_print(
-                        window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
-                    sleep(2)
-                    continue
-            case 52:  # If user presses 4
-                # Load high scores file
-                scores = load_high_score()
-                window.erase()
-                window.addstr(
-                    0, 0, "Press any key to return to menu", curses.color_pair(2))
-                # Print scores to screen
-                draw(window, scores, x, y)
-                window.refresh()
-                # Wait for user input
-                window.getch()
-            case 53:  # If user presses 5
-                shutdown(window, x, y)
+            # Make API call
+            response = load_api("https://type.fit/api/quotes")
+            # Check if response is correct
+            if response != 0:
+                return response
+            else:
+                # Tell user why request failed
+                quick_print(
+                    window, x, y, "Unable to quote, sorry!", curses.color_pair(3))
+                sleep(2)
+                continue
+        elif key == 52:  # If user presses 4
+            # Load high scores file
+            scores = load_high_score()
+            window.erase()
+            window.addstr(
+                0, 0, "Press any key to return to menu", curses.color_pair(2))
+            # Print scores to screen
+            draw(window, scores, x, y)
+            window.refresh()
+            # Wait for user input
+            window.getch()
+        elif key == 53:  # If user presses 5
+            shutdown(window, x, y)
+
+        # match key:
+        #     case 49:  # If user presses 1
+        #         # Get a file path from user
+        #         file_path = get_input_file_location(window, x, y)
+
+        #         # Check file path is
+        #         if file_path == None:
+        #             continue
+        #         else:
+        #             file_text = load_input_file(file_path)
+
+        #         if file_text == None:
+        #             quick_print(
+        #                 window, x, y, "Text file is empty! Returning to menu...", curses.color_pair(3))
+        #             sleep(1)
+        #         else:
+        #             return file_text
+
+        #     case 50:  # If user presses 2
+        #         # Loading page
+        #         quick_print(
+        #             window, x, y, "Loading words from MIT")
+
+        #         # Make API call
+        #         response = load_api(
+        #             "https://www.mit.edu/~ecprice/wordlist.10000")
+
+        #         # Check if response is correct
+        #         if response != 0:
+        #             return response
+        #         else:
+        #             # Tell user why request failed
+        #             quick_print(
+        #                 window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
+        #             sleep(2)
+        #             continue
+        #     case 51:  # If user presses 3
+        #         # Display loading screen
+        #         quick_print(
+        #             window, x, y, "Loading words from MIT")
+
+        #         # Make API call
+        #         response = load_api("https://type.fit/api/quotes")
+        #         # Check if response is correct
+        #         if response != 0:
+        #             return response
+        #         else:
+        #             # Tell user why request failed
+        #             quick_print(
+        #                 window, x, y, "Unable to quote, sorry!", curses.color_pair(3))
+        #             sleep(2)
+        #             continue
+        #     case 52:  # If user presses 4
+        #         # Load high scores file
+        #         scores = load_high_score()
+        #         window.erase()
+        #         window.addstr(
+        #             0, 0, "Press any key to return to menu", curses.color_pair(2))
+        #         # Print scores to screen
+        #         draw(window, scores, x, y)
+        #         window.refresh()
+        #         # Wait for user input
+        #         window.getch()
+        #     case 53:  # If user presses 5
+        #         shutdown(window, x, y)
 
 
 def main(window):
@@ -532,6 +590,11 @@ def main(window):
     curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)  # blue text
     curses.init_pair(5, curses.COLOR_MAGENTA,
                      curses.COLOR_BLACK)  # magenta text
+
+    # If the scores file doesn't exist, create one
+    if 'scores.txt' not in listdir(getcwd()):
+        with open('scores.txt', 'w') as f:
+            print("No high scores.", file=f)
 
     # Ask user for menu choice, return a typing prompt
     typing_prompt = menu(window, text_start_x, text_start_y)
@@ -587,8 +650,7 @@ def main(window):
             # Return to menu
             typing_prompt = menu(window, text_start_x, text_start_y)
             continue
-        # Check if key is alphanumeric/punctuation, add to user input
-        elif check_ascii_input(key):
+        elif check_ascii_input(key):  # Check if key is alphanumeric/punctuation
             # Check if first input, start typing timer
             if len(user_typed_string) == 0:
                 # started = True
