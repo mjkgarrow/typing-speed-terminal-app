@@ -148,7 +148,7 @@ def main(window):
 
             # Print statistics live
             window.addstr(text_start_y - 1, text_start_x,
-                          f"Total WPM: {wpm[0]}, Accuracy: {wpm[2]}%",
+                          f"Total WPM: {wpm[0]}, Consistency: {consistency}%",
                           curses.color_pair(4))
 
             # Check if game time is finished or user has finished typing

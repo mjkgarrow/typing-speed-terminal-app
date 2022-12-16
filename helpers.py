@@ -264,13 +264,11 @@ def sort_scores(scores):
         score_list.append([name, *results])
 
     # Sort the new list of values
-    score_list.sort(key=lambda x: (x[1][:-3], x[2], x[3][:-10]), reverse=True)
+    score_list.sort(key=lambda x: (x[1][:-3], x[2], x[3][:-13]), reverse=True)
 
     # Recombine the list of lists back into a list of strings
     for i in range(len(score_list)):
-        score_list[i] = f"{score_list[i][0]}: {score_list[i][1]}, \
-                        {score_list[i][2]}, {score_list[i][3]}, \
-                        {score_list[i][4]}"
+        score_list[i] = f"{score_list[i][0]}: {score_list[i][1]}, {score_list[i][2]}, {score_list[i][3]}, {score_list[i][4]}"
     return score_list
 
 
@@ -283,8 +281,8 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
         # Open file and read scores into a variable
         with open("scores.txt", "r+") as file_in:
             scores = file_in.read().splitlines()
-            scores.append(f"{username}: {wpm}wpm, {difficulty}, \
-                            {accuracy}% accuracy, {consistency}% consistency")
+            scores.append(
+                f"{username}: {wpm}wpm, {difficulty}, {consistency}% consistency, {accuracy}% accuracy")
             # Sort the scores
             sorted_scores = sort_scores(scores)
         # Truncate scores.txt file and re-write sorted scores to it
@@ -296,11 +294,10 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
     # If scores file doesn't exist, create it and add new score
     else:
         with open("scores.txt", "w") as new_file:
-            new_file.write(f"{username}: {wpm}wpm, {difficulty}, \
-                            {accuracy}% accuracy, {consistency}% consistency")
+            new_file.write(
+                f"{username}: {wpm}wpm, {difficulty}, {consistency}% consistency, {accuracy}% accuracy")
         # Return score for testing purposes
-        return [f"{username}: {wpm}wpm, {difficulty}, \
-            {accuracy}% accuracy, {consistency}% consistency"]
+        return [f"{username}: {wpm}wpm, {difficulty}, {consistency}% consistency, {accuracy}% accuracy"]
 
 
 # Tested in pytest
@@ -390,18 +387,22 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
             return 1
 
 
-def about_screen(window, x, y,):
-    about_text = ["What do the terms mean?",
+def faq_screen(window, x, y,):
+    about_text = ["How to play:",
+                  "    Start typing to begin 30 second timer,",
+                  "    type as fast and as accurately as you can!",
+                  "",
+                  "What do the terms mean?",
                   "",
                   "'wpm' = words per minute",
-                  "    1 word = 5 characters, standardises the game",
-                  "    Incorrect characters will deduct from wpm",
+                  "    1 word = 5 characters, standardises the game.",
+                  "    Incorrect characters will deduct from wpm.",
                   "",
                   "Accuracy = % of correct characters",
                   "",
                   "Consistency = the coefficient of variation in the wpm",
-                  "    It finds the standard deviation from the mean",
-                  "    of the speed of each key press, mapped 0 - 100%",
+                  "    It finds the standard deviation from the mean.",
+                  "    of the speed of each key press, mapped 0 - 100%,",
                   "    100% being the best, 0% the worst."]
 
     while check_valid_terminal():
@@ -412,7 +413,7 @@ def about_screen(window, x, y,):
         window.erase()
 
         # Add about text to buffer
-        draw(window, about_text, x, y)
+        draw(window, about_text, x, y - 3)
 
         # Add user prompt to bugger
         window.addstr(0, 0, "Press any key to return to menu",
@@ -565,7 +566,7 @@ def menu(window, x, y):
             # Wait for user input
             window.getch()
         elif key == 53:  # If user presses 5
-            about_screen(window, x, y,)
+            faq_screen(window, x, y,)
         elif key == 54:  # If user presses 6
             quick_print(window, x, y, "Goodbye", curses.color_pair(2))
             sleep(1)
