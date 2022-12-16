@@ -23,8 +23,8 @@ def main(window):
                      curses.COLOR_BLACK)  # magenta text
 
     # If the scores file doesn't exist, create one
-    if 'scores.txt' not in listdir(getcwd()):
-        with open('scores.txt', 'w') as f:
+    if "scores.txt" not in listdir(getcwd()):
+        with open("scores.txt", "w") as f:
             pass
 
     # Ask user for menu choice, return a typing prompt
@@ -96,13 +96,14 @@ def main(window):
                 user_typed_string = user_typed_string[:-1]
 
         # Wrap typing prompt so it fits in terminal window
-        typing_prompt_wrapped = wrap(
-            typing_prompt, max_width, drop_whitespace=False)
+        typing_prompt_wrapped = wrap(typing_prompt,
+                                     max_width,
+                                     drop_whitespace=False)
 
         # Creates a list of sub-strings from the user input string so it can be correctly displayed over the top of the prompt.
         sub_numbers = [len(i) for i in typing_prompt_wrapped]
-        user_typed_wrapped = [user_typed_string[sum(
-            sub_numbers[:i]):sum(sub_numbers[:i+1])] for i in range(len(sub_numbers))]
+        user_typed_wrapped = [user_typed_string[sum(sub_numbers[:i]):sum(
+            sub_numbers[:i+1])] for i in range(len(sub_numbers))]
 
         # See if user has typed the full length of the prompt
         if len(''.join(user_typed_wrapped)) == len(''.join(typing_prompt_wrapped)):
@@ -113,22 +114,25 @@ def main(window):
 
         # Draw directions to screen
         window.addstr(
-            0, 0, "Press 'esc' to return to menu - score will not be saved", curses.color_pair(4))
+            0, 0, "Press 'esc' to return to menu - score will not be saved",
+            curses.color_pair(4))
 
         # Display difficulty mode
         if hard_mode:
             window.addstr(
-                1, 0, "Difficulty: HARD / No backspaces('tab' to change)", curses.color_pair(5))
+                1, 0, "Difficulty: HARD / No backspaces('tab' to change)",
+                curses.color_pair(5))
         else:
-            window.addstr(
-                1, 0, "Difficulty: EASY ('tab' to change)", curses.color_pair(4))
+            window.addstr(1, 0, "Difficulty: EASY ('tab' to change)",
+                          curses.color_pair(4))
 
         # Show game and stats once user starts typing
         if start != None:
             # Print countdown timer
             countdown = str(30 - (int(time() - start)))
             window.addstr(text_start_y - 2, text_start_x,
-                          f"Time remaining: {countdown}", curses.color_pair(3))
+                          f"Time remaining: {countdown}",
+                          curses.color_pair(3))
 
             # Calculate wpm and accuracy
             wpm = helpers.calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
@@ -144,7 +148,8 @@ def main(window):
 
             # Print statistics live
             window.addstr(text_start_y - 1, text_start_x,
-                          f"Total WPM: {wpm[0]}, Accuracy: {wpm[2]}%, Consistency: {consistency}", curses.color_pair(4))
+                          f"Total WPM: {wpm[0]}, Accuracy: {wpm[2]}%",
+                          curses.color_pair(4))
 
             # Check if game time is finished or user has finished typing
             if int(countdown) == 0 or finished_typing:
@@ -165,10 +170,12 @@ def main(window):
                     continue
         else:
             window.addstr(text_start_y - 2, text_start_x,
-                          f"Start typing to begin the 30 second timer!", curses.color_pair(3))
+                          f"Start typing to begin the 30 second timer!",
+                          curses.color_pair(3))
 
         # Draw typing test on screen
-        helpers.print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,
+        helpers.print_typing_text(window, typing_prompt_wrapped,
+                                  user_typed_wrapped,
                                   text_start_x, text_start_y)
 
         # Position cursor at start of typing prompt
@@ -179,7 +186,8 @@ def main(window):
         window.refresh()
 
     helpers.quick_print(window, text_start_x, text_start_y,
-                        "Terminal window too small - closing app", curses.color_pair(3))
+                        "Terminal window too small - closing app",
+                        curses.color_pair(3))
     sleep(2)
     quit()
 
@@ -193,4 +201,4 @@ if __name__ == "__main__":
         # Calls the main function
         curses.wrapper(main)
     else:
-        print("Terminal must be at least 15 lines high and 75 characters wide")
+        print("Terminal must be at least 20 lines high and 80 characters wide")

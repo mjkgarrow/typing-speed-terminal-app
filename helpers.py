@@ -94,15 +94,16 @@ def get_input_file_location(window, x, y):
             if path.isfile(file_path) and file_path[-3:] == "txt":
                 return file_path
             else:
-                quick_print(
-                    window, x, y, "Please provide a valid file path...", curses.color_pair(3))
+                quick_print(window, x, y, "Please provide a valid file path...",
+                            curses.color_pair(3))
                 sleep(1)
                 file_path = ""
                 window.erase()
 
         # Draw option to return to menu and tell user how to input a text-file
         window.addstr(
-            0, 0, "Press 'esc' to return to menu", curses.color_pair(2))
+            0, 0, "Press 'esc' to return to menu",
+            curses.color_pair(2))
 
         # Draw prompt for file path
         window.addstr(
@@ -267,7 +268,9 @@ def sort_scores(scores):
 
     # Recombine the list of lists back into a list of strings
     for i in range(len(score_list)):
-        score_list[i] = f"{score_list[i][0]}: {score_list[i][1]}, {score_list[i][2]}, {score_list[i][3]}, {score_list[i][4]}"
+        score_list[i] = f"{score_list[i][0]}: {score_list[i][1]}, \
+                        {score_list[i][2]}, {score_list[i][3]}, \
+                        {score_list[i][4]}"
     return score_list
 
 
@@ -280,8 +283,8 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
         # Open file and read scores into a variable
         with open("scores.txt", "r+") as file_in:
             scores = file_in.read().splitlines()
-            scores.append(
-                f"{username}: {wpm}wpm, {difficulty}, {accuracy}% accuracy, {consistency}% consistency")
+            scores.append(f"{username}: {wpm}wpm, {difficulty}, \
+                            {accuracy}% accuracy, {consistency}% consistency")
             # Sort the scores
             sorted_scores = sort_scores(scores)
         # Truncate scores.txt file and re-write sorted scores to it
@@ -293,10 +296,11 @@ def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
     # If scores file doesn't exist, create it and add new score
     else:
         with open("scores.txt", "w") as new_file:
-            new_file.write(
-                f"{username}: {wpm}wpm, {difficulty}, {accuracy}% accuracy, {consistency}% consistency")
+            new_file.write(f"{username}: {wpm}wpm, {difficulty}, \
+                            {accuracy}% accuracy, {consistency}% consistency")
         # Return score for testing purposes
-        return [f"{username}: {wpm}wpm, {difficulty}, {accuracy}% accuracy, {consistency}% consistency"]
+        return [f"{username}: {wpm}wpm, {difficulty}, \
+            {accuracy}% accuracy, {consistency}% consistency"]
 
 
 # Tested in pytest
@@ -334,8 +338,8 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
     # Loop to get user input
     while check_valid_terminal():
         # Print congratulations
-        window.addstr(
-            y - 1, x, "Well done! Here are your typing speed stats", curses.color_pair(4))
+        window.addstr(y - 1, x, "Well done! Here are your typing speed stats",
+                      curses.color_pair(4))
 
         # List of statistics
         statistics = [f"Your words per minute: {wpm}",
@@ -376,14 +380,52 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
                 return 1
             else:
                 # If username used, prompt for new username
-                window.addstr(
-                    y + 5, x, "CAN'T USE THAT NAME, PLEASE CHOOSE A DIFFERENT NAME", curses.color_pair(3))
+                window.addstr(y + 5, x, "CAN'T USE THAT NAME, PLEASE CHOOSE A DIFFERENT NAME",
+                              curses.color_pair(3))
                 window.refresh()
                 sleep(2)
                 window.erase()
                 username = ""
         elif check_esc(key):  # Check if key is 'esc', returns to main menu
             return 1
+
+
+def about_screen(window, x, y,):
+    about_text = ["What do the terms mean?",
+                  "",
+                  "'wpm' = words per minute",
+                  "    1 word = 5 characters, standardises the game",
+                  "    Incorrect characters will deduct from wpm",
+                  "",
+                  "Accuracy = % of correct characters",
+                  "",
+                  "Consistency = the coefficient of variation in the wpm",
+                  "    It finds the standard deviation from the mean",
+                  "    of the speed of each key press, mapped 0 - 100%",
+                  "    100% being the best, 0% the worst."]
+
+    while check_valid_terminal():
+        # Update delay so that program waits on user input
+        window.nodelay(False)
+
+        # Clear screen
+        window.erase()
+
+        # Add about text to buffer
+        draw(window, about_text, x, y)
+
+        # Add user prompt to bugger
+        window.addstr(0, 0, "Press any key to return to menu",
+                      curses.color_pair(2))
+
+        # Draw text on screen
+        window.refresh()
+
+        # Get user input
+        key = window.getch()
+
+        if key != None:
+            return
 
 
 # Tested in pytest
@@ -410,7 +452,7 @@ def load_api(url):
     else:
         # Create a list of 50 random words from response
         word_selection = [response[randint(0, len(response))].decode(
-            encoding='UTF-8') for _ in range(50)]
+            encoding="UTF-8") for _ in range(50)]
 
         # Return string of word selection
         return " ".join(word_selection)
@@ -427,7 +469,8 @@ def menu(window, x, y):
                  "2. Type random words",
                  "3. Type a quote",
                  "4. See high scores",
-                 "5. Quit"]
+                 "5. FAQ",
+                 "6. Quit"]
 
     # Set cursor to invisible
     curses.curs_set(0)
@@ -444,7 +487,7 @@ def menu(window, x, y):
         for i in range(len(menu_text)):
             if i < 2:
                 colour = curses.color_pair(5)  # Magenta title text
-            elif i == 6:
+            elif i == 7:
                 colour = curses.color_pair(3)  # Red quit text
             else:
                 colour = curses.color_pair(4)  # Blue option text
@@ -467,8 +510,8 @@ def menu(window, x, y):
                 file_text = load_input_file(file_path)
 
             if file_text == None:
-                quick_print(
-                    window, x, y, "Text file is empty! Returning to menu...", curses.color_pair(3))
+                quick_print(window, x, y, "Text file is empty! Returning to menu...",
+                            curses.color_pair(3))
                 sleep(2)
             else:
                 return file_text
@@ -486,8 +529,8 @@ def menu(window, x, y):
                 return response
             else:
                 # Tell user why request failed
-                quick_print(
-                    window, x, y, "Unable to load random words, sorry!", curses.color_pair(3))
+                quick_print(window, x, y, "Unable to load random words, sorry!",
+                            curses.color_pair(3))
                 sleep(2)
                 continue
         elif key == 51:  # If user presses 3
@@ -502,26 +545,28 @@ def menu(window, x, y):
                 return response
             else:
                 # Tell user why request failed
-                quick_print(
-                    window, x, y, "Unable to quote, sorry!", curses.color_pair(3))
+                quick_print(window, x, y, "Unable to quote, sorry!",
+                            curses.color_pair(3))
                 sleep(2)
                 continue
         elif key == 52:  # If user presses 4
             # Load high scores file
             scores = load_high_score()
             if scores == None:
-                with open('scores.txt', 'w') as f:
+                with open("scores.txt", "w") as f:
                     pass
                 scores = ["No high scores."]
             window.erase()
-            window.addstr(
-                0, 0, "Press any key to return to menu", curses.color_pair(2))
+            window.addstr(0, 0, "Press any key to return to menu",
+                          curses.color_pair(2))
             # Print scores to screen
             draw(window, scores, x, y)
             window.refresh()
             # Wait for user input
             window.getch()
         elif key == 53:  # If user presses 5
+            about_screen(window, x, y,)
+        elif key == 54:  # If user presses 6
             quick_print(window, x, y, "Goodbye", curses.color_pair(2))
             sleep(1)
             quit()
