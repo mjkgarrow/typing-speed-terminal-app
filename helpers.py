@@ -59,6 +59,8 @@ def check_esc(key):
 
 
 def get_input_file_location(window, x, y):
+    ''' Displays a prompt for user to type a text file path name, returns the validated path'''
+
     # Set input delay to True so program doesn't pause for input
     window.nodelay(True)
 
@@ -85,12 +87,13 @@ def get_input_file_location(window, x, y):
             file_path = file_path[:-1]
         # If user presses 'enter', check file path is valid
         elif check_enter_input(key):
-            if path.isfile(file_path):
+            if path.isfile(file_path) and file_path[-3:] == "txt":
                 return file_path
             else:
                 quick_print(
                     window, x, y, "Please provide a valid file path...", curses.color_pair(3))
                 sleep(1)
+                file_path = ""
                 window.erase()
 
         # Draw option to return to menu and tell user how to input a text-file
