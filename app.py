@@ -144,7 +144,7 @@ def main(window):
 
             # Print statistics live
             window.addstr(text_start_y - 1, text_start_x,
-                          f"Total WPM: {wpm[0]}, Correct WPM: {wpm[1]}, Accuracy: {wpm[2]}%, Consistency: {consistency}", curses.color_pair(4))
+                          f"Total WPM: {wpm[0]}, Accuracy: {wpm[2]}%, Consistency: {consistency}", curses.color_pair(4))
 
             # Check if game time is finished or user has finished typing
             if int(countdown) == 0 or finished_typing:
@@ -163,11 +163,9 @@ def main(window):
                     typing_prompt = helpers.menu(
                         window, text_start_x, text_start_y)
                     continue
-                elif restart == None:
-                    helpers.quick_print(
-                        window, text_start_x, text_start_y, "Please provide a valid file path...", curses.color_pair(3))
-                    sleep(1)
-                    window.erase()
+        else:
+            window.addstr(text_start_y - 2, text_start_x,
+                          f"Start typing to begin the 30 second timer!", curses.color_pair(3))
 
         # Draw typing test on screen
         helpers.print_typing_text(window, typing_prompt_wrapped, user_typed_wrapped,

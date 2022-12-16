@@ -5,6 +5,8 @@ from requests import get
 from random import randint
 from numpy import mean, std
 
+# Tested manually
+
 
 def check_valid_terminal():
     ''' Checks if valid terminal size'''
@@ -15,6 +17,7 @@ def check_valid_terminal():
     return True
 
 
+# Tested manually
 def get_window_sizes():
     ''' Find the size of the terminal window and calculate maximum string width and starting positions'''
 
@@ -58,6 +61,7 @@ def check_esc(key):
     return False
 
 
+# Tested manually
 def get_input_file_location(window, x, y):
     ''' Displays a prompt for user to type a text file path name, returns the validated path'''
 
@@ -222,6 +226,7 @@ def calculate_wpm(prompt, user_typed, time_in_seconds):
     return (gross_wpm, net_wpm, accuracy)
 
 
+# Tested manually
 def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, text_start_y):
     ''' Draws prompt and user typed input to screen and displays accuracy colour coding '''
 
@@ -411,12 +416,13 @@ def load_api(url):
         return " ".join(word_selection)
 
 
+# Tested manually
 def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
 
     # List of menu options
     menu_text = ["Welcome to Typing Wizard, a typing game to test your skills",
-                 "Please select an option from the menu:",
+                 "Please select an option number from the menu:",
                  "1. Type from file",
                  "2. Type random words",
                  "3. Type a quote",
@@ -463,7 +469,7 @@ def menu(window, x, y):
             if file_text == None:
                 quick_print(
                     window, x, y, "Text file is empty! Returning to menu...", curses.color_pair(3))
-                sleep(1)
+                sleep(2)
             else:
                 return file_text
         elif key == 50:  # If user presses 2
