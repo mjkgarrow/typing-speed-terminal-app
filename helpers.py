@@ -409,11 +409,11 @@ def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
 
     # List of menu options
-    menu_text = ["Welcome to Keebz-Typerz, a typing game to test your skills",
+    menu_text = ["Welcome to Typing Wizard, a typing game to test your skills",
                  "Please select an option from the menu:",
-                 "1. Test from file",
-                 "2. Test random words",
-                 "3. Test a quote",
+                 "1. Type from file",
+                 "2. Type random words",
+                 "3. Type a quote",
                  "4. See high scores",
                  "5. Quit"]
 
