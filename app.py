@@ -1,6 +1,6 @@
 import curses
 from time import time, sleep
-from os import environ, get_terminal_size, listdir, getcwd
+from os import environ, get_terminal_size, listdir, getcwd, path
 from textwrap import wrap
 from requests import get
 from random import randint
@@ -37,6 +37,57 @@ def shutdown(window, x, y):
     quick_print(window, x, y, "Goodbye", curses.color_pair(2))
     sleep(1)
     quit()
+
+
+def check_ascii_input(key):
+    if 32 <= key < 126:
+        return True
+    return False
+
+
+def check_enter_input(key):
+    if key == 10 or key == 13:
+        return True
+    return False
+
+
+def check_backspace(key):
+    if key == 127:
+        return True
+    return False
+
+
+def check_esc(key):
+    if key == 27:
+        return True
+    return False
+
+
+def get_input_file_location(window, x, y):
+    # Set input delay to True so program doesn't pause for input
+    window.nodelay(True)
+    # Clear screen
+    window.erase()
+    # Draw option to return to menu and tell user how to input a text-file
+    window.addstr(
+        0, 0, "Press 'enter' to return to menu", curses.color_pair(2))
+    # Attempt to load the text file
+    while True:
+
+        key = window.getch()
+        file_path = ""
+        window.addstr(
+            y, x, f"Provide location of text file: {file_path}")
+        window.refresh()
+
+        # If user presses 'enter', break loop
+        if check_enter_input(key):
+            if path.isfile(file_path):
+                pass
+            else:
+                return None
+        elif check_ascii_input(key):
+            file_path += key
 
 
 def load_input_file():
@@ -283,14 +334,14 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
         # Get user input
         key = window.getch()
 
-        if 32 <= key < 126:  # Check if key is alphanumeric/punctuation
+        if check_ascii_input(key):  # Check if key is alphanumeric/punctuation
             # Add to username
             username += chr(key)
-        elif key == 127:  # Check if key is backspace
+        elif check_backspace(key):  # Check if key is backspace
             # Remove from username
             if len(username) > 0:
                 username = username[:-1]
-        elif key == 10 or key == 13:  # Check if enter key
+        elif check_enter_input(key):  # Check if enter key
             # Check username isn't used
             if username_unused(username.strip()):
                 # Save score to file
@@ -305,7 +356,7 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
                 sleep(2)
                 window.erase()
                 username = ""
-        elif key == 27:  # Check if key is 'esc', returns to main menu
+        elif check_esc(key):  # Check if key is 'esc', returns to main menu
             return 1
 
 
@@ -376,6 +427,19 @@ def menu(window, x, y):
 
         match key:
             case 49:  # If user presses 1
+                file_name = get_input_file_location(window, x, y)
+                if file_name == None:
+                    continue
+                else:
+                    file_text = load_input_file(file_name)
+
+                if file_text == None:
+                    quick_print(
+                        window, x, y, "Text file is empty! Returning to menu", curses.color_pair(3))
+                    sleep(1)
+                else:
+                    return file_text
+
                 # Set input delay to True so program waits for input
                 window.nodelay(True)
                 # Clear screen
@@ -393,7 +457,7 @@ def menu(window, x, y):
                     file_text = load_input_file()
 
                     # If user presses 'enter', break loop
-                    if key == 10 or key == 13:
+                    if check_enter_input(key):
                         break
                     # If file is empty
                     if file_text == 0:
@@ -505,7 +569,7 @@ def main(window):
 
         # Get user input
         key = window.getch()
-        if key == 27:  # Check if key is 'esc', quits immediately
+        if check_esc(key):  # Check if key is 'esc', quits immediately
             shutdown(window, text_start_x, text_start_y)
         elif key == 9:  # Check if key is 'tab', change difficulty mode
             if start != None:
@@ -514,7 +578,7 @@ def main(window):
                 hard_mode = False
             else:
                 hard_mode = True
-        elif key == 10 or key == 13:  # Check if 'enter' key hit, return to menu
+        elif check_enter_input(key):  # Check if 'enter' key hit, return to menu
             # Clear user typed string
             user_typed_string = ""
             # Reset timer and finished typing
@@ -523,14 +587,15 @@ def main(window):
             # Return to menu
             typing_prompt = menu(window, text_start_x, text_start_y)
             continue
-        elif 32 <= key < 126:  # Check if key is alphanumeric/punctuation, add to user input
+        # Check if key is alphanumeric/punctuation, add to user input
+        elif check_ascii_input(key):
             # Check if first input, start typing timer
             if len(user_typed_string) == 0:
                 # started = True
                 start = time()
             user_typed_string += chr(key)
             typed = True
-        elif key == 127:  # Check if key is backspace, remove from user input
+        elif check_backspace(key):  # Check if key is backspace, remove from user input
             # Hard mode prevents user from using backspace
             if hard_mode:
                 continue
