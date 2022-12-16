@@ -10,7 +10,7 @@ def check_valid_terminal():
     ''' Checks if valid terminal size'''
 
     window_size = [get_terminal_size()[0], get_terminal_size()[1]]
-    if window_size[0] <= 75 or window_size[1] <= 15:
+    if window_size[0] < 80 or window_size[1] < 20:
         return False
     return True
 
@@ -352,7 +352,10 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
 
         if check_ascii_input(key):  # Check if key is alphanumeric/punctuation
             # Add to username
-            username += chr(key)
+            window_width = get_terminal_size()[0]
+            text_start = get_window_sizes()[1]
+            if len(statistics[4]) < (window_width - text_start):
+                username += chr(key)
         elif check_backspace(key):  # Check if key is backspace
             # Remove from username
             username = username[:-1]

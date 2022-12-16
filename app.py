@@ -195,4 +195,4 @@ if __name__ == "__main__":
         # Calls the main function
         curses.wrapper(main)
     else:
-        print("Terminal must be at least 20 lines high and 75 characters wide")
+        print("Terminal must be at least 15 lines high and 75 characters wide")
