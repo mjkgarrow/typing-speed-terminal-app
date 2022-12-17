@@ -1,7 +1,7 @@
 import curses
 from time import sleep
 from os import get_terminal_size, listdir, getcwd, path
-from requests import get
+import requests
 from random import randint
 from numpy import mean, std
 from textwrap import wrap
@@ -446,6 +446,36 @@ def faq_screen(window, x, y,):
             return
 
 
+# # Tested in pytest
+# def load_api1(url):
+#     ''' Makes an API request to supplied url and creates a typing prompt from the response'''
+
+#     try:
+#         # Try make request and generate list of all words from the response
+#         if "quotes" in url:
+#             response = get("https://type.fit/api/quotes", timeout=2).json()
+#         else:
+#             response = get("https://www.mit.edu/~ecprice/wordlist.10000",
+#                            timeout=2).content.splitlines()
+#     except:
+#         # Return if an error is generated
+#         return 0
+
+#     if "quotes" in url:
+#         # Select a random quote from response
+#         quote = response[randint(0, len(response))]
+
+#         # Return string of quote
+#         return f"{quote['text']} - {quote['author']}"
+#     else:
+#         # Create a list of 50 random words from response
+#         word_selection = [response[randint(0, len(response))].decode(
+#             encoding="UTF-8") for _ in range(50)]
+
+#         # Return string of word selection
+#         return " ".join(word_selection)
+
+
 # Tested in pytest
 def load_api(url):
     ''' Makes an API request to supplied url and creates a typing prompt from the response'''
@@ -453,10 +483,11 @@ def load_api(url):
     try:
         # Try make request and generate list of all words from the response
         if "quotes" in url:
-            response = get("https://type.fit/api/quotes", timeout=2).json()
+            response = requests.get(url, timeout=2).json()
         else:
-            response = get("https://www.mit.edu/~ecprice/wordlist.10000",
-                           timeout=2).content.splitlines()
+            response = requests.get(url).text.split(" = ")[1][1:-2].split("|")
+            # response = requests.get(url,
+            #                         timeout=2).text.split("\n")
     except:
         # Return if an error is generated
         return 0
@@ -468,15 +499,23 @@ def load_api(url):
         # Return string of quote
         return f"{quote['text']} - {quote['author']}"
     else:
+        # text = []
+        # for word in response:
+        #     text.append(word.split("\t")[0].lower())
+        for word in response:
+            if "’" in word:
+                response.remove(word)
+
         # Create a list of 50 random words from response
-        word_selection = [response[randint(0, len(response))].decode(
-            encoding="UTF-8") for _ in range(50)]
+        word_selection = [response[randint(0, len(response))]
+                          for _ in range(50)]
 
         # Return string of word selection
         return " ".join(word_selection)
 
-
 # Tested manually
+
+
 def menu(window, x, y, max_width):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
 
@@ -536,11 +575,13 @@ def menu(window, x, y, max_width):
         elif key == 50:  # If user presses 2
             # Loading page
             quick_print(
-                window, x, y, "Loading words from MIT")
+                window, x, y, "Loading 50 words from https://xkcd.com/simplewriter/")
+
+            sleep(1)
 
             # Make API call
             response = load_api(
-                "https://www.mit.edu/~ecprice/wordlist.10000")
+                "https://xkcd.com/simplewriter/words.js")
 
             # Check if response is correct
             if response != 0:
@@ -554,16 +595,19 @@ def menu(window, x, y, max_width):
         elif key == 51:  # If user presses 3
             # Display loading screen
             quick_print(
-                window, x, y, "Loading words from MIT")
+                window, x, y, "Loading a quote from https://type.fit/api/quotes")
+
+            sleep(1)
 
             # Make API call
             response = load_api("https://type.fit/api/quotes")
+
             # Check if response is correct
             if response != 0:
                 return wrap(response, max_width, drop_whitespace=False)
             else:
                 # Tell user why request failed
-                quick_print(window, x, y, "Unable to quote, sorry!",
+                quick_print(window, x, y, "Unable to load quote, sorry!",
                             curses.color_pair(3))
                 sleep(2)
                 continue
