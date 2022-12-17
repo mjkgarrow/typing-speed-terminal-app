@@ -4,6 +4,7 @@ from os import get_terminal_size, listdir, getcwd, path
 from requests import get
 from random import randint
 from numpy import mean, std
+from textwrap import wrap
 
 # Tested manually
 
@@ -59,6 +60,16 @@ def check_esc(key):
     if key == 27:
         return True
     return False
+
+
+def wrap_user_input(user_typed_string, typing_prompt_wrapped):
+    '''Creates a list of sub-strings from the user input string 
+    that maps to the length of the prompt sub-strings
+    so it can be correctly displayed over the top of the prompt.'''
+
+    sub_numbers = [len(i) for i in typing_prompt_wrapped]
+    return [user_typed_string[sum(sub_numbers[:i]):
+                              sum(sub_numbers[:i+1])] for i in range(len(sub_numbers))]
 
 
 # Tested manually
@@ -391,6 +402,8 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
 
 
 def faq_screen(window, x, y,):
+    ''' Displays the FAQ screen text'''
+
     about_text = ["How to play:",
                   "    Start typing to begin 30 second timer,",
                   "    type as fast and as accurately as you can!",
@@ -463,7 +476,7 @@ def load_api(url):
 
 
 # Tested manually
-def menu(window, x, y):
+def menu(window, x, y, max_width):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
 
     # List of menu options
@@ -518,7 +531,7 @@ def menu(window, x, y):
                             curses.color_pair(3))
                 sleep(2)
             else:
-                return file_text
+                return wrap(file_text, max_width, drop_whitespace=False)
         elif key == 50:  # If user presses 2
             # Loading page
             quick_print(
@@ -530,7 +543,7 @@ def menu(window, x, y):
 
             # Check if response is correct
             if response != 0:
-                return response
+                return wrap(response, max_width, drop_whitespace=False)
             else:
                 # Tell user why request failed
                 quick_print(window, x, y, "Unable to load random words, sorry!",
@@ -546,7 +559,7 @@ def menu(window, x, y):
             response = load_api("https://type.fit/api/quotes")
             # Check if response is correct
             if response != 0:
-                return response
+                return wrap(response, max_width, drop_whitespace=False)
             else:
                 # Tell user why request failed
                 quick_print(window, x, y, "Unable to quote, sorry!",

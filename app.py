@@ -28,7 +28,8 @@ def main(window):
             pass
 
     # Ask user for menu choice, return a typing prompt
-    typing_prompt = helpers.menu(window, text_start_x, text_start_y)
+    typing_prompt_wrapped = helpers.menu(window, text_start_x,
+                                         text_start_y, max_width)
 
     # Booleans for checking if game has started and ended
     start = None
@@ -79,7 +80,8 @@ def main(window):
             start = None
             finished_typing = False
             # Return to menu
-            typing_prompt = helpers.menu(window, text_start_x, text_start_y)
+            typing_prompt_wrapped = helpers.menu(window, text_start_x,
+                                                 text_start_y, max_width)
             continue
         elif helpers.check_ascii_input(key):  # If key ascii
             # Check if first input, start typing timer
@@ -95,19 +97,13 @@ def main(window):
             if len(user_typed_string) > 0:
                 user_typed_string = user_typed_string[:-1]
 
-        # Wrap typing prompt so it fits in terminal window
-        typing_prompt_wrapped = wrap(typing_prompt,
-                                     max_width,
-                                     drop_whitespace=False)
+        # Map the user input text to the wrapped prompt
+        user_typed_wrapped = helpers.wrap_user_input(user_typed_string,
+                                                     typing_prompt_wrapped)
 
-        # Creates a list of sub-strings from the user input string so it can be correctly displayed over the top of the prompt.
-        sub_numbers = [len(i) for i in typing_prompt_wrapped]
-        user_typed_wrapped = [user_typed_string[sum(sub_numbers[:i]):sum(
-            sub_numbers[:i+1])] for i in range(len(sub_numbers))]
-
-        # See if user has typed the full length of the prompt
-        if len(''.join(user_typed_wrapped)) == len(''.join(typing_prompt_wrapped)):
-            finished_typing = True
+        # Boolean variable to see if user has typed the full length of the prompt
+        finished_typing = (len(''.join(user_typed_wrapped)) ==
+                           len(''.join(typing_prompt_wrapped)))
 
         # Clear screen so new text can be drawn
         window.erase()
@@ -155,7 +151,8 @@ def main(window):
             if int(countdown) == 0 or finished_typing:
                 # Generate final screen with stats
                 restart = helpers.final_screen(window, consistency,
-                                               wpm[1], wpm[2], hard_mode, text_start_x, text_start_y)
+                                               wpm[1], wpm[2], hard_mode,
+                                               text_start_x, text_start_y)
                 if restart == 1:
                     # Clear user typed string
                     user_typed_string = ""
@@ -165,8 +162,8 @@ def main(window):
                     # Erase screen
                     window.erase()
                     # Return to menu
-                    typing_prompt = helpers.menu(
-                        window, text_start_x, text_start_y)
+                    typing_prompt_wrapped = helpers.menu(window, text_start_x,
+                                                         text_start_y, max_width)
                     continue
         else:
             window.addstr(text_start_y - 2, text_start_x,
