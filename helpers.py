@@ -278,7 +278,8 @@ def sort_scores(scores):
         score_list.append([name, *results])
 
     # Sort the new list of values
-    score_list.sort(key=lambda x: (x[1][:-3], x[2], x[3][:-13]), reverse=True)
+    score_list.sort(key=lambda x: (x[1][:-3], x[2],
+                                   x[3][:-13], x[4][:-10]), reverse=True)
 
     # Recombine the list of lists back into a list of strings
     for i in range(len(score_list)):
