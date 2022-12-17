@@ -124,18 +124,18 @@ class Test_load_api(unittest.TestCase):
     # Tests API call to random words returns 50 words
     def test_random_words_count(self):
         result = helpers.load_api(
-            "https://xkcd.com/simplewriter/words.js")
+            "https://norvig.com/ngrams/count_big.txt")
         self.assertEqual(len(result.split()), 50)
 
     # Tests API call to random words returns a str
     def test_random_words_type(self):
         result = helpers.load_api(
-            "https://xkcd.com/simplewriter/words.js")
+            "https://norvig.com/ngrams/count_big.txt")
         self.assertEqual(type(result), type("result"))
 
     # Test API call to quote returns a str
     def test_quote_response(self):
-        result = helpers.load_api("https://type.fit/api/quotes")
+        result = helpers.load_api("https://api.quotable.io/random")
         self.assertEqual(type(result), type("result"))
 
 
