@@ -450,33 +450,28 @@ def load_api(url):
     ''' Makes an API request to supplied url and creates a typing prompt from the response'''
 
     try:
-        # Try make request and generate list of all words from the response
-        if "quotes" in url:
+        # Try make request to the url
+        if "quotable" in url:
+            # Request a random quote
             response = requests.get(url, timeout=2).json()
         else:
-            response = requests.get(url).text.split(" = ")[1][1:-2].split("|")
-            # response = requests.get(url,
-            #                         timeout=2).text.split("\n")
+            # Request a txt file of 29,136 words
+            response = requests.get(url, timeout=2).text.split("\n")
     except:
         # Return if an error is generated
         return 0
 
-    if "quotes" in url:
-        # Select a random quote from response
-        quote = response[randint(0, len(response))]
-
+    if "quotable" in url:
         # Return string of quote
-        return f"{quote['text']} - {quote['author']}"
+        return f"{response['content']} - {response['author']}"
     else:
-        # text = []
-        # for word in response:
-        #     text.append(word.split("\t")[0].lower())
+        # Clean up response into a list of words
+        text = []
         for word in response:
-            if "’" in word:
-                response.remove(word)
+            text.append(word.split("\t")[0].lower())
 
-        # Create a list of 50 random words from response
-        word_selection = [response[randint(0, len(response))]
+        # Select 50 random words
+        word_selection = [text[randint(0, len(text))]
                           for _ in range(50)]
 
         # Return string of word selection
@@ -543,13 +538,11 @@ def menu(window, x, y, max_width):
         elif key == 50:  # If user presses 2
             # Loading page
             quick_print(
-                window, x, y, "Loading 50 words from https://xkcd.com/simplewriter/")
-
-            sleep(1)
+                window, x, y, "Loading 50 words from https://norvig.com/ngrams/")
 
             # Make API call
             response = load_api(
-                "https://xkcd.com/simplewriter/words.js")
+                "https://norvig.com/ngrams/count_big.txt")
 
             # Check if response is correct
             if response != 0:
@@ -563,12 +556,10 @@ def menu(window, x, y, max_width):
         elif key == 51:  # If user presses 3
             # Display loading screen
             quick_print(
-                window, x, y, "Loading a quote from https://type.fit/api/quotes")
-
-            sleep(1)
+                window, x, y, "Loading a quote from https://api.quotable.io/random")
 
             # Make API call
-            response = load_api("https://type.fit/api/quotes")
+            response = load_api("https://api.quotable.io/random")
 
             # Check if response is correct
             if response != 0:
