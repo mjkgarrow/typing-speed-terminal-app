@@ -6,14 +6,14 @@ from unittest.mock import patch, mock_open
 
 
 class Test_save_score_to_file(unittest.TestCase):
-    @ patch("builtins.open", new_callable=mock_open, read_data="Matt 1: 77wpm, Easy mode, 100.0% accuracy, 84.52% consistency")
+    @ patch("builtins.open", new_callable=mock_open, read_data="Matt 1: 77wpm, Easy mode, 84.52% consistency, 100.0% accuracy")
     def test_file_read_write(self, mock_file):
         result = helpers.save_score_to_file(
             'Matt 2', 90, 100.0, 'Easy mode', 84.52)
         assert result == [
-            'Matt 2: 90wpm, Easy mode, 100.0% accuracy, 84.52% consistency'] or result == [
-            'Matt 2: 90wpm, Easy mode, 100.0% accuracy, 84.52% consistency',
-            'Matt 1: 77wpm, Easy mode, 100.0% accuracy, 84.52% consistency']
+            'Matt 2: 90wpm, Easy mode, 84.52% consistency, 100.0% accuracy'] or result == [
+            'Matt 2: 90wpm, Easy mode, 84.52% consistency, 100.0% accuracy',
+            'Matt 1: 77wpm, Easy mode, 84.52% consistency, 100.0% accuracy']
 
 
 class Test_load_high_scores(unittest.TestCase):
@@ -125,13 +125,13 @@ class Test_load_api(unittest.TestCase):
     # Tests API call to random words returns 50 words
     def test_random_words_count(self):
         result = helpers.load_api(
-            "https://www.mit.edu/~ecprice/wordlist.10000")
+            "https://xkcd.com/simplewriter/words.js")
         self.assertEqual(len(result.split()), 50)
 
     # Tests API call to random words returns a str
     def test_random_words_type(self):
         result = helpers.load_api(
-            "https://www.mit.edu/~ecprice/wordlist.10000")
+            "https://xkcd.com/simplewriter/words.js")
         self.assertEqual(type(result), type("result"))
 
     # Test API call to quote returns a str

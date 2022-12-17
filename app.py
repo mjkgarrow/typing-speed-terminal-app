@@ -69,10 +69,8 @@ def main(window):
         if key == 9:  # If 'tab', change difficulty mode
             if start != None:
                 continue
-            if hard_mode:
-                hard_mode = False
-            else:
-                hard_mode = True
+            # Flip difficulty
+            hard_mode = not hard_mode
         if helpers.check_esc(key):  # If 'esc', return to menu
             # Clear user typed string
             user_typed_string = ""
@@ -166,6 +164,7 @@ def main(window):
                                                          text_start_y, max_width)
                     continue
         else:
+            # Print start game prompt
             window.addstr(text_start_y - 2, text_start_x,
                           f"Start typing to begin the 30 second timer!",
                           curses.color_pair(3))

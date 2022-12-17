@@ -267,7 +267,7 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
 
 # Tested in pytest
 def sort_scores(scores):
-    ''' Sorts scores in descending order by wpm/difficulty/accuracy'''
+    ''' Sorts scores in descending order by wpm/difficulty/consistency/accuracy'''
 
     # Loop over scores to separate values so they can be sorted
     score_list = []
@@ -446,36 +446,6 @@ def faq_screen(window, x, y,):
             return
 
 
-# # Tested in pytest
-# def load_api1(url):
-#     ''' Makes an API request to supplied url and creates a typing prompt from the response'''
-
-#     try:
-#         # Try make request and generate list of all words from the response
-#         if "quotes" in url:
-#             response = get("https://type.fit/api/quotes", timeout=2).json()
-#         else:
-#             response = get("https://www.mit.edu/~ecprice/wordlist.10000",
-#                            timeout=2).content.splitlines()
-#     except:
-#         # Return if an error is generated
-#         return 0
-
-#     if "quotes" in url:
-#         # Select a random quote from response
-#         quote = response[randint(0, len(response))]
-
-#         # Return string of quote
-#         return f"{quote['text']} - {quote['author']}"
-#     else:
-#         # Create a list of 50 random words from response
-#         word_selection = [response[randint(0, len(response))].decode(
-#             encoding="UTF-8") for _ in range(50)]
-
-#         # Return string of word selection
-#         return " ".join(word_selection)
-
-
 # Tested in pytest
 def load_api(url):
     ''' Makes an API request to supplied url and creates a typing prompt from the response'''
@@ -513,9 +483,8 @@ def load_api(url):
         # Return string of word selection
         return " ".join(word_selection)
 
+
 # Tested manually
-
-
 def menu(window, x, y, max_width):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
 
