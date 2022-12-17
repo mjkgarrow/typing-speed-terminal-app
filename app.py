@@ -1,7 +1,6 @@
 import curses
 from time import time, sleep
 from os import environ, listdir, getcwd
-from textwrap import wrap
 import helpers
 
 

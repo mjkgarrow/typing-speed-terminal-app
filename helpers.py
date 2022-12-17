@@ -6,9 +6,8 @@ from random import randint
 from numpy import mean, std
 from textwrap import wrap
 
+
 # Tested manually
-
-
 def check_valid_terminal():
     ''' Checks if valid terminal size'''
 
