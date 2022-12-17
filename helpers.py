@@ -107,7 +107,10 @@ def get_input_file_location(window, x, y):
 
         # Draw prompt for file path
         window.addstr(
-            y, x, f"Provide location of text (txt) file, then press enter: {file_path}")
+            y, x, f"Provide location of text (txt) file, then press enter:")
+
+        # Draw user input
+        window.addstr(y + 1, x, file_path, curses.color_pair(4))
 
         # Refresh page with text
         window.refresh()
@@ -464,7 +467,7 @@ def menu(window, x, y):
     ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
 
     # List of menu options
-    menu_text = ["Welcome to Typing Wizard, a typing game to test your skills",
+    menu_text = ["Welcome to Typing Wizard, a typing game to test your skills!",
                  "Please select an option number from the menu:",
                  "1. Type from file",
                  "2. Type random words",
