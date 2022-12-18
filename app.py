@@ -13,13 +13,19 @@ def main(window):
     text_start_x = window_sizes[1]
     text_start_y = window_sizes[2]
 
+    curses.start_color()
+    curses.use_default_colors()
+    for i in range(0, curses.COLORS):
+        curses.init_pair(i, i, -1)
+
     # Applying text styling colours to the curses class
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # white text
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # green text
-    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)  # red text
-    curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)  # blue text
-    curses.init_pair(5, curses.COLOR_MAGENTA,
-                     curses.COLOR_BLACK)  # magenta text
+    # curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # white text
+    # curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # white text
+    # curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # green text
+    # curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)  # red text
+    # curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)  # blue text
+    # curses.init_pair(5, curses.COLOR_MAGENTA,
+    #                  curses.COLOR_BLACK)  # magenta text
 
     # If the scores file doesn't exist, create one
     if "scores.txt" not in listdir(getcwd()):
@@ -108,24 +114,24 @@ def main(window):
         # Draw directions to screen
         window.addstr(
             0, 0, "Press 'esc' to return to menu - score will not be saved",
-            curses.color_pair(4))
+            curses.color_pair(39))
 
         # Display difficulty mode
         if hard_mode:
             window.addstr(
                 1, 0, "Difficulty: HARD / No backspaces('tab' to change)",
-                curses.color_pair(5))
+                curses.color_pair(13))
         else:
             window.addstr(1, 0, "Difficulty: EASY ('tab' to change)",
-                          curses.color_pair(4))
+                          curses.color_pair(39))
 
         # Show game and stats once user starts typing
         if start != None:
             # Print countdown timer
             countdown = str(30 - (int(time() - start)))
-            window.addstr(text_start_y - 2, text_start_x,
+            window.addstr(text_start_y - 3, text_start_x,
                           f"Time remaining: {countdown}",
-                          curses.color_pair(3))
+                          curses.color_pair(208))
 
             # Calculate wpm and accuracy
             wpm = helpers.calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
@@ -140,9 +146,9 @@ def main(window):
             consistency = helpers.measure_consistency(wpm_values)
 
             # Print statistics live
-            window.addstr(text_start_y - 1, text_start_x,
+            window.addstr(text_start_y - 2, text_start_x,
                           f"Total WPM: {wpm[0]}, Consistency: {consistency}%",
-                          curses.color_pair(4))
+                          curses.color_pair(39))
 
             # Check if game time is finished or user has finished typing
             if int(countdown) == 0 or finished_typing:
@@ -164,9 +170,9 @@ def main(window):
                     continue
         else:
             # Print start game prompt
-            window.addstr(text_start_y - 2, text_start_x,
+            window.addstr(text_start_y - 3, text_start_x,
                           f"Start typing to begin the 30 second timer!",
-                          curses.color_pair(3))
+                          curses.color_pair(208))
 
         # Draw typing test on screen
         helpers.print_typing_text(window, typing_prompt_wrapped,
@@ -182,7 +188,7 @@ def main(window):
 
     helpers.quick_print(window, text_start_x, text_start_y,
                         "Terminal window too small - closing app",
-                        curses.color_pair(3))
+                        curses.color_pair(9))
     sleep(2)
     quit()
 

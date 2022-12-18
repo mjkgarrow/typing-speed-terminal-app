@@ -104,8 +104,9 @@ def get_input_file_location(window, x, y):
             if path.isfile(file_path) and file_path[-3:] == "txt":
                 return file_path
             else:
+                # Draws prompt in red
                 quick_print(window, x, y, "Please provide a valid file path...",
-                            curses.color_pair(3))
+                            curses.color_pair(160))
                 sleep(1)
                 file_path = ""
                 window.erase()
@@ -113,14 +114,14 @@ def get_input_file_location(window, x, y):
         # Draw option to return to menu and tell user how to input a text-file
         window.addstr(
             0, 0, "Press 'esc' to return to menu",
-            curses.color_pair(2))
+            curses.color_pair(77))
 
         # Draw prompt for file path
         window.addstr(
             y, x, f"Provide location of text (txt) file, then press enter:")
 
-        # Draw user input
-        window.addstr(y + 1, x, file_path, curses.color_pair(4))
+        # Draw user input in blue
+        window.addstr(y + 1, x, file_path, curses.color_pair(39))
 
         # Refresh page with text
         window.refresh()
@@ -252,9 +253,9 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
         for char in range(len(wrapped_user_typed[line])):
             # Change colour of user input text
             if wrapped_user_typed[line][char] != typing_prompt[line][char]:
-                colour = curses.color_pair(3)  # Red text if wrong
+                colour = curses.color_pair(160)  # Red text if wrong
             else:
-                colour = curses.color_pair(2)  # Green text if right
+                colour = curses.color_pair(77)  # Green text if right
             # Add each individual character to screen
             if wrapped_user_typed[line][char] == " ":
                 window.addstr(text_start_y + line, text_start_x +
@@ -348,24 +349,30 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
 
     # Loop to get user input
     while check_valid_terminal():
-        # Print congratulations
+
+        # Clear screen
+        window.erase()
+
+        # Print congratulations in blue
         window.addstr(y - 1, x, "Well done! Here are your typing speed stats",
-                      curses.color_pair(4))
+                      curses.color_pair(39))
 
         # List of statistics
         statistics = [f"Your words per minute: {wpm}",
                       f"Your accuracy: {accuracy}%",
                       f"Your consistency: {consistency}%",
                       "",
-                      f"Type username to save score: {username} ",
+                      f"Type username to save score: ",
                       "",
                       "Press 'enter' to save or 'esc' to return to menu"]
 
         # Draw statistics on screen
         draw(window, statistics, x, y + 1)
+        window.addstr(y + 5, x + len(statistics[4]),
+                      username, curses.color_pair(39))
 
         # Position cursor to username typing area
-        window.move(y + 5, x + (len(statistics[4]) - 1))
+        window.move(y + 5, x + (len(statistics[4]) + len(username)))
 
         # Refresh window with text
         window.refresh()
@@ -392,7 +399,7 @@ def final_screen(window, consistency, wpm, accuracy, difficulty, x, y):
             else:
                 # If username used, prompt for new username
                 window.addstr(y + 5, x, "CAN'T USE THAT NAME, PLEASE CHOOSE A DIFFERENT NAME",
-                              curses.color_pair(3))
+                              curses.color_pair(160))
                 window.refresh()
                 sleep(2)
                 window.erase()
@@ -433,7 +440,7 @@ def faq_screen(window, x, y,):
 
         # Add user prompt to bugger
         window.addstr(0, 0, "Press any key to return to menu",
-                      curses.color_pair(2))
+                      curses.color_pair(77))
 
         # Draw text on screen
         window.refresh()
@@ -506,11 +513,11 @@ def menu(window, x, y, max_width):
         # Display menu options with colours
         for i in range(len(menu_text)):
             if i < 2:
-                colour = curses.color_pair(5)  # Magenta title text
+                colour = curses.color_pair(13)  # Magenta title text
             elif i == 7:
-                colour = curses.color_pair(3)  # Red quit text
+                colour = curses.color_pair(160)  # Red quit text
             else:
-                colour = curses.color_pair(4)  # Blue option text
+                colour = curses.color_pair(39)  # Blue option text
             window.addstr(y + i, x, menu_text[i], colour)
 
         # Draw text on screen
@@ -550,7 +557,7 @@ def menu(window, x, y, max_width):
             else:
                 # Tell user why request failed
                 quick_print(window, x, y, "Unable to load random words, sorry!",
-                            curses.color_pair(3))
+                            curses.color_pair(160))
                 sleep(2)
                 continue
         elif key == 51:  # If user presses 3
@@ -567,7 +574,7 @@ def menu(window, x, y, max_width):
             else:
                 # Tell user why request failed
                 quick_print(window, x, y, "Unable to load quote, sorry!",
-                            curses.color_pair(3))
+                            curses.color_pair(160))
                 sleep(2)
                 continue
         elif key == 52:  # If user presses 4
@@ -579,7 +586,7 @@ def menu(window, x, y, max_width):
                 scores = ["No high scores."]
             window.erase()
             window.addstr(0, 0, "Press any key to return to menu",
-                          curses.color_pair(2))
+                          curses.color_pair(77))
             # Print scores to screen
             draw(window, scores, x, y)
             window.refresh()
@@ -588,6 +595,6 @@ def menu(window, x, y, max_width):
         elif key == 53:  # If user presses 5
             faq_screen(window, x, y,)
         elif key == 54:  # If user presses 6
-            quick_print(window, x, y, "Goodbye", curses.color_pair(2))
+            quick_print(window, x, y, "Goodbye", curses.color_pair(77))
             sleep(1)
             quit()
