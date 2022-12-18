@@ -1,4 +1,5 @@
-# CLI Typing test
+# Python Typing Test CLI game
+
 
 ## Purpose
 
@@ -7,6 +8,8 @@
 </p>
 
 This Python CLI program tests the user's typing speed with prompts from the user, random words online or famous quotes. After the game finishes you can save your score to a scores.txt file, which is ordered with the reigning champion at the top.
+
+[Youtube presentation](https://youtu.be/S7eMk84ctTA)
 
 ---
 

@@ -20,8 +20,7 @@ if command -v python3 &>/dev/null; then
         # Update pip (it seems to need it)
         pip install --upgrade pip
       else 
-        echo "Error: This program needs Python 3.8+ to run, \
-        to install check out https://www.python.org/downloads/"
+        echo "Error: This program needs Python 3.8+ to run, to install check out https://www.python.org/downloads/"
       fi 
     else
       # Activate the virtual environment
@@ -48,9 +47,7 @@ if command -v python3 &>/dev/null; then
   fi 
 else
   # Display an error message if Python is not found
-  echo "Error: This program needs Python to run, \
-  to install check out https://www.python.org/downloads/"
+  echo "Error: This program needs Python to run, to install check out https://www.python.org/downloads/"
   exit
 fi
-echo "Virtual environment created and \
-requirments installed, to play run ./run_app.sh"
+echo "Virtual environment created and requirments installed, to play run ./run_app.sh"
