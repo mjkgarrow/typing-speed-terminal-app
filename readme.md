@@ -11,7 +11,7 @@
     <img src="./docs/example.gif" height=300>
 </p>
 
-This Python CLI program tests the user's typing speed with prompts from the user, random words online or famous quotes. If you score a good word-per-minute your name is added to the high-scores.
+This Python CLI program tests the user's typing speed with prompts from the user, random words online or famous quotes. After the game finishes you can save your score to a scores.txt file, which is ordered with the reigning champion at the top.
 
 ---
 
@@ -107,5 +107,12 @@ User can select between 'Easy mode', which is just regular play, or 'Hard mode',
 Choosing hard mode also means you will be promoted higher in the final scores.
 
 --- 
+
+## Code Styling
+
+This codebases follows the Python [PEP 8 styleguide](https://peps.python.org/pep-0008/).
+
+This includes 
+
 
 ## References

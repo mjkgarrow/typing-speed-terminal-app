@@ -13,19 +13,11 @@ def main(window):
     text_start_x = window_sizes[1]
     text_start_y = window_sizes[2]
 
+    # Generate all Curser colours to be used in the app
     curses.start_color()
     curses.use_default_colors()
     for i in range(0, curses.COLORS):
         curses.init_pair(i, i, -1)
-
-    # Applying text styling colours to the curses class
-    # curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # white text
-    # curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)  # white text
-    # curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)  # green text
-    # curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)  # red text
-    # curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK)  # blue text
-    # curses.init_pair(5, curses.COLOR_MAGENTA,
-    #                  curses.COLOR_BLACK)  # magenta text
 
     # If the scores file doesn't exist, create one
     if "scores.txt" not in listdir(getcwd()):
@@ -49,7 +41,8 @@ def main(window):
     # Variable to store user input
     user_typed_string = ""
 
-    # Variable to store wpm each time a user types something, used by the consistency function
+    # Variable to store wpm each time a user types
+    # something, used by the consistency function
     wpm_values = []
 
     # Loop to get user input
@@ -104,7 +97,8 @@ def main(window):
         user_typed_wrapped = helpers.wrap_user_input(user_typed_string,
                                                      typing_prompt_wrapped)
 
-        # Boolean variable to see if user has typed the full length of the prompt
+        # Boolean variable to see if user has
+        # typed the full length of the prompt
         finished_typing = (len(''.join(user_typed_wrapped)) ==
                            len(''.join(typing_prompt_wrapped)))
 
@@ -134,10 +128,12 @@ def main(window):
                           curses.color_pair(208))
 
             # Calculate wpm and accuracy
-            wpm = helpers.calculate_wpm(''.join(typing_prompt_wrapped), ''.join(
-                user_typed_wrapped), 31 - int(countdown))
+            wpm = helpers.calculate_wpm(''.join(typing_prompt_wrapped),
+                                        ''.join(user_typed_wrapped),
+                                        31 - int(countdown))
 
-            # Store wpm value each time user types a char so consistency value can be computed
+            # Store wpm value each time user types a char
+            # so consistency value can be computed
             if typed == True:
                 wpm_values.append(wpm[1])
                 typed = False
@@ -165,8 +161,8 @@ def main(window):
                     # Erase screen
                     window.erase()
                     # Return to menu
-                    typing_prompt_wrapped = helpers.menu(window, text_start_x,
-                                                         text_start_y, max_width)
+                    typing_prompt_wrapped = helpers.menu(
+                        window, text_start_x, text_start_y, max_width)
                     continue
         else:
             # Print start game prompt

@@ -19,7 +19,8 @@ def check_valid_terminal():
 
 # Tested manually
 def get_window_sizes():
-    ''' Find the size of the terminal window and calculate maximum string width and starting positions'''
+    ''' Find the size of the terminal window and 
+    calculate maximum string width and starting positions'''
 
     # Get terminal window size [width, height]
     window_size = [get_terminal_size()[0], get_terminal_size()[1]]
@@ -35,6 +36,8 @@ def get_window_sizes():
 
 # Tested in pytest
 def check_ascii_input(key):
+    ''' Check user input is alphnumeric/punctuation'''
+
     if 32 <= key < 126:
         return True
     return False
@@ -42,6 +45,8 @@ def check_ascii_input(key):
 
 # Tested in pytest
 def check_enter_input(key):
+    ''' Check user input is enter key'''
+
     if key == 10 or key == 13:
         return True
     return False
@@ -49,6 +54,8 @@ def check_enter_input(key):
 
 # Tested in pytest
 def check_backspace(key):
+    ''' Check user input is backspace key'''
+
     if key == 127:
         return True
     return False
@@ -56,6 +63,8 @@ def check_backspace(key):
 
 # Tested in pytest
 def check_esc(key):
+    ''' Check user input is esc key'''
+
     if key == 27:
         return True
     return False
@@ -68,12 +77,14 @@ def wrap_user_input(user_typed_string, typing_prompt_wrapped):
 
     sub_numbers = [len(i) for i in typing_prompt_wrapped]
     return [user_typed_string[sum(sub_numbers[:i]):
-                              sum(sub_numbers[:i+1])] for i in range(len(sub_numbers))]
+                              sum(sub_numbers[:i+1])] for i in range(
+                                  len(sub_numbers))]
 
 
 # Tested manually
 def get_input_file_location(window, x, y):
-    ''' Displays a prompt for user to type a text file path name, returns the validated path'''
+    ''' Displays a prompt for user to type a 
+    text file path name, returns the validated path'''
 
     # Set input delay to True so program doesn't pause for input
     window.nodelay(True)
@@ -105,7 +116,8 @@ def get_input_file_location(window, x, y):
                 return file_path
             else:
                 # Draws prompt in red
-                quick_print(window, x, y, "Please provide a valid file path...",
+                quick_print(window, x, y,
+                            "Please provide a valid file path...",
                             curses.color_pair(160))
                 sleep(1)
                 file_path = ""
@@ -128,7 +140,8 @@ def get_input_file_location(window, x, y):
 
 
 def load_input_file(file_name):
-    '''Loads prompt txt file from within app directory, returns a string of file contents'''
+    '''Loads prompt txt file from within 
+    app directory, returns a string of file contents'''
 
     with open(file_name, 'r') as f:
         lines = f.read().splitlines()
@@ -174,7 +187,8 @@ def quick_print(window, x, y, text, colour=None):
 
 
 def draw(window, text, text_start_x, text_start_y):
-    '''Draws list of text to the screen, line by line, but doesn't refresh screen'''
+    '''Draws list of text to the screen, 
+    line by line, but doesn't refresh screen'''
 
     for i in range(len(text)):
         window.addstr(text_start_y + i, text_start_x,
@@ -183,7 +197,8 @@ def draw(window, text, text_start_x, text_start_y):
 
 # Tested in pytest
 def measure_consistency(wpm_values):
-    ''' Calculates typing consistency based on the standard deviation of wpm from 0 - 100%'''
+    ''' Calculates typing consistency based on 
+    the standard deviation of wpm from 0 - 100%'''
     ''' Algorithm inspired by https://monkeytype.com/about'''
 
     # If provided an empty wpm_values list, return 0
@@ -218,7 +233,8 @@ def calculate_wpm(prompt, user_typed, time_in_seconds):
     ''' Words-per-minute calculated by (total characters/5)/60 seconds'''
     ''' Making a word 5 letters long standardises the statistics'''
 
-    # The function may be called with a user input of 0 characters, so return 0 instead of running the algorithm
+    # The function may be called with a user input of 0 characters,
+    # so return 0 instead of running the algorithm
     if len(user_typed) == 0:
         return (0, 0, 0)
 
@@ -246,8 +262,11 @@ def calculate_wpm(prompt, user_typed, time_in_seconds):
 
 
 # Tested manually
-def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, text_start_y):
-    ''' Draws prompt and user typed input to screen and displays accuracy colour coding '''
+def print_typing_text(window, typing_prompt,
+                      wrapped_user_typed,
+                      text_start_x, text_start_y):
+    ''' Draws prompt and user typed input to 
+    screen and displays accuracy colour coding '''
 
     # Draw typing prompt to screen
     draw(window, typing_prompt, text_start_x, text_start_y)
@@ -271,7 +290,8 @@ def print_typing_text(window, typing_prompt, wrapped_user_typed, text_start_x, t
 
 # Tested in pytest
 def sort_scores(scores):
-    ''' Sorts scores in descending order by wpm/difficulty/consistency/accuracy'''
+    ''' Sorts scores in descending order by 
+    wpm/difficulty/consistency/accuracy'''
 
     # Loop over scores to separate values so they can be sorted
     score_list = []
@@ -293,7 +313,8 @@ def sort_scores(scores):
 
 # Tested in pytest
 def save_score_to_file(username, wpm, accuracy, difficulty, consistency):
-    ''' Opens or creates a file, sorts the scores by wpm/accuracy/difficulty, saves scores to file'''
+    ''' Opens or creates a file, sorts the 
+    scores by wpm/accuracy/difficulty, saves scores to file'''
 
     # Check if scores file already exists
     if "scores.txt" in listdir(getcwd()):
@@ -458,7 +479,8 @@ def faq_screen(window, x, y,):
 
 # Tested in pytest
 def load_api(url):
-    ''' Makes an API request to supplied url and creates a typing prompt from the response'''
+    ''' Makes an API request to supplied url and 
+    creates a typing prompt from the response'''
 
     try:
         # Try make request to the url
@@ -491,7 +513,8 @@ def load_api(url):
 
 # Tested manually
 def menu(window, x, y, max_width):
-    ''' Displays menu for user to select an option, returns a typing prompt based on the option'''
+    ''' Displays menu for user to select an option, 
+    returns a typing prompt based on the option'''
 
     # List of menu options
     menu_text = ["Welcome to Typing Wizard, a typing game to test your skills!",
