@@ -27,7 +27,7 @@ if command -v python3 &>/dev/null; then
     fi
   else
     echo "Virtual environment not created, \
-    try running ./install_requirements.sh"
+    try running ./install_reqs.sh"
   fi 
 else
   # Display an error message if Python is not found

@@ -34,7 +34,7 @@ If using MacOS, Ubuntu or Linux:
 
 2. Just virtual environment setup and installing requirements:
 ```
-./install_requirements.sh
+./install_reqs.sh
 ```
 
 3. Run game if virtual environment and requirements already installed. Running this saves time by not trying to install requirements or set up venv again.
