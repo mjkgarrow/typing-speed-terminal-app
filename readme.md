@@ -12,6 +12,8 @@ This Python CLI program tests the user's typing speed with prompts from the user
 
 ## Install
 
+This app requires at least **Python 3.9+** and _preferably_ **Python 3.11**.
+
 Clone from [Github repo](https://github.com/mjkgarrow/typing-speed-terminal-app):
 ```
 git clone git@github.com:mjkgarrow/typing-speed-terminal-app.git
@@ -72,12 +74,6 @@ Requires Python 3.9+ and Linux/Ubuntu/MacOS to run the bash files. If using Wind
 
 ---
 
-
-
----
-
-
-
 ## Usage
 
 When the app is run you will be greeted by a menu page, where you can make the following selections:
@@ -111,7 +107,7 @@ When the app is run you will be greeted by a menu page, where you can make the f
     <img src="./docs/app_examples/scores.png">
 </p>
 
-5 - An FAQ
+5 - FAQ page
 
 <p align="center">
     <img src="./docs/app_examples/faq.png">
@@ -126,25 +122,52 @@ When the app is run you will be greeted by a menu page, where you can make the f
 
 **Gameplay**
 
-Difficulty setting - press ‘tab’ to change difficulty (hard mode disables backspaces)
-Difficulty is displayed at the top left
+Selecting Option 1 will prompt you to input a txt file path. File path is then validated:
+- if file exists
+- if file is ‘.txt’
+- if user inputted empty path
+
+An invalid file path prompt:
+<p align="center">
+    <img src="./docs/app_examples/file_input_error.png">
+</p>
+
+Options 2 and 3 are API calls to get random words and quotes, respectively.
+
+After choosing your game mode, you can then select the difficulty setting - press ‘tab’ to change difficulty (hard mode disables backspaces). Difficulty is displayed at the top left:
 
 <p align="center">
     <img src="./docs/app_examples/hard_mode.png">
     <img src="./docs/app_examples/easy_mode.png">
 </p>
 
-Start typing to begin game.
-Timer appears
-Statistics update live
-Colour-coded input to see if you are typing correctly
+Start typing to begin game. Timer appears and statistics update live.
+
+You have 30 seconds to type as fast as you can!
+
+Your input will change colour to show if you are typing correctly (green) or incorrectly (red).
 
 <p align="center">
     <img src="./docs/app_examples/gameplay.png">
 </p>
 
----
 
+At the end of the timer (or if you complete the writing prompt) you are given the option to save your scores.
+
+The user can input their username, which will be validated for:
+- Correct length (must contain at least 1 character)
+- Uniqueness (username must not already exist)
+
+<p align="center">
+    <img src="./docs/app_examples/save_screen.png">
+</p>
+<p align="center">
+    <img src="./docs/app_examples/save_screen_error.png">
+</p>
+
+Good luck with your typing speed! My best was 84wpm...
+
+---
 
 ## Features
 
@@ -158,10 +181,12 @@ Colour-coded input to see if you are typing correctly
 - If you provide a file that contacts text but no words (ie, no spaces), it will limit the prompt to 400 characters.
 
 ### Review previous scores, with the current leader at the top
-The app will search for a previous scores text file. If it exists it will display the scores, with the leader at the top. If the file exists but is empty it will print a handling message.
+- The app will search for a previous scores text file. If it exists it will display the scores, with the leader at the top. 
+- If the file exists but is empty it will print a handling message.
 
 ### Save your score to a file
-When you save your score it will be automatically ordered into the previous scores, ordered by wpm/difficulty/consistency/accuracy
+- The app creates an empty scores.txt file at the start of the game, unless there already exists a scores.txt file.
+- When you save your score it will be automatically sorted into the previous scores, the sorting priority being: wpm->difficulty->consistency->accuracy.
 
 ### Display live typing results
 Statistics include:
@@ -215,15 +240,13 @@ The project was broken up into sections for the features, including a day at the
     <img src="./docs/trello/Screenshot 2022-12-07 at 12.54.00 am.png" height=300>
 </p>
 
-Later on I added a bucket to review rubric requirements:
+Later on I added a bucket to review rubric requirements and added more specific checkpoints for the features:
 
 <p align="center">
     <img src="./docs/trello/Screenshot 2022-12-17 at 4.15.16 pm.png" height=300>
 </p>
 
-
 ---
-
 
 ## References
 
@@ -236,14 +259,12 @@ This API is to a text file hosted by American computer scientist Peter Norvig as
 
 The text file is data for the chapter Natural Language Corpus Data, and is freely available through an MIT License that allows “Commercial use, Modification, Distribution and Private use.”
 
-
 **Famous quotes**:
 This is from a GitHub API, created by [Luke Peavey](https://github.com/lukePeavey/quotable)
 
 I used the GET /random call to get a json of a random quote.
 
 The API is listed under an MIT License.
-
 
 ### Code help
 
@@ -255,5 +276,6 @@ The answer was from here: [Split the string into different lengths chunks](https
 
 Courtesy of user [cs95](https://stackoverflow.com/users/4909087/cs95).
 
+---
 
-
+Released 
