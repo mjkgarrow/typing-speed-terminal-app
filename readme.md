@@ -1,28 +1,48 @@
 # CLI Typing test
 
+## Source repository
+
+[Github repo](https://github.com/mjkgarrow/typing-speed-terminal-app)
+
+
 ## Purpose
-
-This Python CLI program tests the user's typing speed with prompts from the user, random words online or famous quotes. If you score a good word-per-minute your name is added to the high-scores.
-
----
-
-## Example
 
 <p align="center">
     <img src="./docs/example.gif" height=300>
 </p>
 
+This Python CLI program tests the user's typing speed with prompts from the user, random words online or famous quotes. If you score a good word-per-minute your name is added to the high-scores.
+
+---
+
+
 ## Usage
 
-1. Install dependencies
+sadfkaskdjfhaks
+
+
+---
+
+## Install
+
+If using MacOS, Ubuntu or Linux:
+
+1. Quick virtual environment setup, install requirements and run game:
 ```
-pip install -r requirements.txt
+./quick_setup.sh
 ```
 
-2. Run bash script to play game
+2. Just virtual environment setup and installing requirements:
 ```
-bash script.sh
+./install_requirements.sh
 ```
+
+3. Run game if virtual environment and requirements already installed
+```
+./run_app.sh
+```
+
+If using Windows, try installing Cygwin and following these instructions: [Cygwin  FAQ](https://www.cygwin.com/faq.html#faq.setup.setup)
 
 ---
 
@@ -46,6 +66,9 @@ This program uses the following Python packages:
 - Load a typing prompt from file
 - Test your typing with random words
 - Test your typing with a famous quote
+
+### Load input from a file
+- You can provide a path to a .txt file you would like to practice typing on. The typing prompt is limited to 50 words
 
 ### Review previous scores, with the current leader at the top
 The app will search for a previous scores text file.
@@ -82,3 +105,7 @@ wpm_coefficient = 100 - ((wpm_standard_deviation / wpm_mean) * 100)
 User can select between 'Easy mode', which is just regular play, or 'Hard mode', which disables the delete/backspace key.
 
 Choosing hard mode also means you will be promoted higher in the final scores.
+
+--- 
+
+## References

@@ -1,19 +1,40 @@
 #!/bin/bash
 
-echo "Creting virtual environment and installing requirements"
+
+
+echo "Creating virtual environment and installing requirements"
+
+# Check if Python is installed
 if command -v python3 &>/dev/null; then
-  # Create a virtual environment
-  python3 -m venv venv
+  # Check if a folder called 'venv' already exists
+  if [ -d "venv" ]; then
+    # Check if the virtual environment is active
+    if [[ -n "$VIRTUAL_ENV" ]]; then
+      # Install the required packages from the requirements file
+      pip install -r requirements.txt  
+    else
+      # Activate the virtual environment
+      source venv/bin/activate
 
-  # Activate the virtual environment
-  source env/bin/activate
+      # Install the required packages from the requirements file
+      # Blocks "already installed" notifications
+      pip install -r requirements.txt | grep -v 'already satisfied'
+    fi
+  else
+    # Create a virtual environment
+    python3 -m venv venv
 
-  # Update pip (seems to need it)
-  pip install --upgrade pip
+    # Activate the virtual environment
+    source venv/bin/activate
 
-  # Install the required packages from the requirements file
-  pip install -r requirements.txt  
+    # Update pip (seems to need it)
+    pip install --upgrade pip
+
+    # Install the required packages from the requirements file
+    pip install -r requirements.txt  
+  fi 
 else
   # Display an error message if Python is not found
-  echo "Error: This program runs on Python, which isn't installed on this machine. To install Python, check out https://installpython3.com/'" >&2
+  echo "Error: This program needs Python to run, To install Python check out https://www.python.org/downloads/" >&2
 fi
+echo "Virtual environment created and requirments installed, run ./run_app.sh to play game"

@@ -134,8 +134,12 @@ def load_input_file(file_name):
         lines = f.read().splitlines()
         if len(lines) == 0:
             return None
-        text = " ".join(lines).split()[:50]
-        return " ".join(text)
+        text = " ".join(" ".join(lines).split()[:50])
+
+        if len(text) > 400:
+            return text[:400]
+        return text
+        # return " ".join(text)
 
 
 # Tested in pytest
@@ -538,10 +542,11 @@ def menu(window, x, y, max_width):
 
             if file_text == None:
                 quick_print(window, x, y, "Text file is empty! Returning to menu...",
-                            curses.color_pair(3))
+                            curses.color_pair(160))
                 sleep(2)
             else:
                 return wrap(file_text, max_width, drop_whitespace=False)
+
         elif key == 50:  # If user presses 2
             # Loading page
             quick_print(
