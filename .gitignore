@@ -3,3 +3,5 @@ text.txt
 scores.txt
 __pycache__
 .pytest_cache
+.DS_Store
+docs/.DS_Store
